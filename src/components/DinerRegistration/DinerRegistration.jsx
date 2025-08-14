@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getPassTemplate, createDinerPass } from '../../services/api';
 import Loading from '../common/Loading';
@@ -25,9 +25,9 @@ const DinerRegistration = () => {
 
   useEffect(() => {
     loadTemplate();
-  }, [passId]);
+  }, [passId, loadTemplate]);
 
-  const loadTemplate = async () => {
+  const loadTemplate = useCallback(async () => {
     try {
       setLoading(true);
       const data = await getPassTemplate(passId);
@@ -38,7 +38,7 @@ const DinerRegistration = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [passId]);
 
   const handleInputChange = (field, value) => {
     setDinerData(prev => ({

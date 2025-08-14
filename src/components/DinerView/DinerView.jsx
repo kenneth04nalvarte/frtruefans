@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { getDinerPass, getPassTemplate, downloadPassFile, downloadPassWithFetch, downloadPassNewWindow } from '../../services/api';
 import Loading from '../common/Loading';
@@ -17,9 +17,9 @@ const DinerView = () => {
 
   useEffect(() => {
     loadDinerPass();
-  }, [serialNumber]);
+  }, [serialNumber, loadDinerPass]);
 
-  const loadDinerPass = async () => {
+  const loadDinerPass = useCallback(async () => {
     try {
       setLoading(true);
       const data = await getDinerPass(serialNumber);
@@ -40,7 +40,7 @@ const DinerView = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [serialNumber]);
 
   const handleDownload = async (method = 'direct') => {
     setDownloading(true);

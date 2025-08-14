@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import { getPassTemplate } from '../../services/api';
 import Loading from '../common/Loading';
-import ErrorMessage from '../common/ErrorMessage';
 import './QRCodeDisplay.css';
 
 const QRCodeDisplay = () => {
@@ -15,9 +14,9 @@ const QRCodeDisplay = () => {
 
   useEffect(() => {
     loadTemplate();
-  }, [passId]);
+  }, [passId, loadTemplate]);
 
-  const loadTemplate = async () => {
+  const loadTemplate = useCallback(async () => {
     try {
       setLoading(true);
       const data = await getPassTemplate(passId);
@@ -28,7 +27,7 @@ const QRCodeDisplay = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [passId]);
 
   const getRegistrationUrl = () => {
     if (!template) return '';
