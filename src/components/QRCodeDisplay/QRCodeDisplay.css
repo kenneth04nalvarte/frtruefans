@@ -1,0 +1,266 @@
+.qr-display-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.qr-display-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+}
+
+.qr-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.qr-header h1 {
+  color: #1f2937;
+  margin-bottom: 0.5rem;
+  font-size: 2rem;
+}
+
+.qr-header p {
+  color: #6b7280;
+  font-size: 1.1rem;
+}
+
+.qr-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.qr-section {
+  text-align: center;
+}
+
+.qr-section h3 {
+  color: #374151;
+  margin-bottom: 1rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.qr-code {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: #f9fafb;
+  border-radius: 8px;
+}
+
+.qr-url {
+  font-family: monospace;
+  font-size: 0.875rem;
+  color: #6b7280;
+  word-break: break-all;
+  background: #f3f4f6;
+  padding: 0.5rem;
+  border-radius: 4px;
+  margin: 0;
+}
+
+.template-info {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+.template-info h3 {
+  color: #374151;
+  margin-bottom: 1rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.info-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.info-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.info-item .label {
+  font-weight: 600;
+  color: #374151;
+  min-width: 120px;
+}
+
+.info-item .value {
+  color: #6b7280;
+  text-align: right;
+  word-break: break-word;
+}
+
+.qr-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: #f9fafb;
+  border-radius: 8px;
+}
+
+.btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background: #3b82f6;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #2563eb;
+}
+
+.btn-secondary {
+  background: #6b7280;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background: #4b5563;
+}
+
+.usage-instructions {
+  background: #e3f2fd;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.usage-instructions h3 {
+  color: #1976d2;
+  margin-bottom: 1rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.usage-instructions ol {
+  color: #555;
+  line-height: 1.6;
+  padding-left: 1.5rem;
+}
+
+.usage-instructions li {
+  margin-bottom: 0.5rem;
+}
+
+.qr-size-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f3f4f6;
+  border-radius: 6px;
+}
+
+.qr-size-controls label {
+  font-weight: 500;
+  color: #374151;
+  min-width: 100px;
+}
+
+.qr-size-controls input[type="range"] {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: #d1d5db;
+  outline: none;
+  -webkit-appearance: none;
+}
+
+.qr-size-controls input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #3b82f6;
+  cursor: pointer;
+}
+
+.qr-size-controls input[type="range"]::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #3b82f6;
+  cursor: pointer;
+  border: none;
+}
+
+.qr-size-controls span {
+  font-weight: 500;
+  color: #374151;
+  min-width: 60px;
+  text-align: right;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .qr-display-container {
+    padding: 1rem;
+  }
+  
+  .qr-display-card {
+    padding: 1.5rem;
+  }
+  
+  .qr-content {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .qr-actions {
+    flex-direction: column;
+  }
+  
+  .info-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+  
+  .info-item .value {
+    text-align: left;
+  }
+  
+  .qr-size-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+  
+  .qr-size-controls label {
+    min-width: auto;
+  }
+  
+  .qr-size-controls span {
+    text-align: center;
+  }
+}
