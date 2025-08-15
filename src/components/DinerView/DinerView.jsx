@@ -12,12 +12,9 @@ const DinerView = () => {
   const [template, setTemplate] = useState(null);
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState(false);
+  // eslint-disable-next-line no-unused-vars
   const [error, setError] = useState('');
   const [downloadStatus, setDownloadStatus] = useState(null); // 'success', 'error', null
-
-  useEffect(() => {
-    loadDinerPass();
-  }, [serialNumber, loadDinerPass]);
 
   const loadDinerPass = useCallback(async () => {
     try {
@@ -41,6 +38,10 @@ const DinerView = () => {
       setLoading(false);
     }
   }, [serialNumber]);
+
+  useEffect(() => {
+    loadDinerPass();
+  }, [loadDinerPass]);
 
   const handleDownload = async (method = 'direct') => {
     setDownloading(true);

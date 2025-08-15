@@ -23,10 +23,6 @@ const DinerRegistration = () => {
     heardAbout: ''
   });
 
-  useEffect(() => {
-    loadTemplate();
-  }, [passId, loadTemplate]);
-
   const loadTemplate = useCallback(async () => {
     try {
       setLoading(true);
@@ -39,6 +35,10 @@ const DinerRegistration = () => {
       setLoading(false);
     }
   }, [passId]);
+
+  useEffect(() => {
+    loadTemplate();
+  }, [loadTemplate]);
 
   const handleInputChange = (field, value) => {
     setDinerData(prev => ({

@@ -9,12 +9,9 @@ const QRCodeDisplay = () => {
   const { passId } = useParams();
   const [template, setTemplate] = useState(null);
   const [loading, setLoading] = useState(true);
+  // eslint-disable-next-line no-unused-vars
   const [error, setError] = useState('');
   const [qrSize, setQrSize] = useState(256);
-
-  useEffect(() => {
-    loadTemplate();
-  }, [passId, loadTemplate]);
 
   const loadTemplate = useCallback(async () => {
     try {
@@ -28,6 +25,10 @@ const QRCodeDisplay = () => {
       setLoading(false);
     }
   }, [passId]);
+
+  useEffect(() => {
+    loadTemplate();
+  }, [loadTemplate]);
 
   const getRegistrationUrl = () => {
     if (!template) return '';
