@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { getDinerPass, getPassTemplate, downloadPassFile, downloadPassWithFetch, downloadPassNewWindow } from '../../services/api';
+import PassUpdateService from '../../services/PassUpdateService';
 import Loading from '../common/Loading';
 import ErrorMessage from '../common/ErrorMessage';
 import SuccessMessage from '../common/SuccessMessage';
@@ -15,6 +16,8 @@ const DinerView = () => {
   // eslint-disable-next-line no-unused-vars
   const [error, setError] = useState('');
   const [downloadStatus, setDownloadStatus] = useState(null); // 'success', 'error', null
+  const [updateService] = useState(new PassUpdateService());
+  const [connectionStatus, setConnectionStatus] = useState({ connected: false, polling: false });
 
   const loadDinerPass = useCallback(async () => {
     try {
@@ -38,6 +41,48 @@ const DinerView = () => {
       setLoading(false);
     }
   }, [serialNumber]);
+
+  // Handle pass updates from SSE
+  const handlePassUpdate = useCallback((update) => {
+    console.log('Pass updated:', update);
+    
+    // Refresh pass data
+    loadDinerPass();
+    
+    // Show success message
+    alert('Your pass has been updated!');
+  }, [loadDinerPass]);
+
+  // Connect to SSE when component mounts
+  useEffect(() => {
+    if (dinerPass && dinerPass.passId) {
+      // Generate a simple user ID from the serial number for demo purposes
+      const userId = `user-${serialNumber}`;
+      
+      // Connect to SSE
+      updateService.connect(userId, handlePassUpdate);
+      
+      // Subscribe to this specific pass
+      updateService.subscribeToPass(dinerPass.passId);
+      
+      // Request notification permission
+      if ('Notification' in window) {
+        Notification.requestPermission();
+      }
+      
+      // Update connection status periodically
+      const statusInterval = setInterval(() => {
+        setConnectionStatus(updateService.getConnectionStatus());
+      }, 5000);
+      
+      // Cleanup on unmount
+      return () => {
+        updateService.unsubscribeFromPass(dinerPass.passId);
+        updateService.disconnect();
+        clearInterval(statusInterval);
+      };
+    }
+  }, [dinerPass, serialNumber, updateService, handlePassUpdate]);
 
   useEffect(() => {
     loadDinerPass();
@@ -147,6 +192,18 @@ const DinerView = () => {
             <li>Tap "Add" to add the pass to your wallet</li>
             <li>You'll receive location-based notifications when you're near the restaurant</li>
           </ol>
+        </div>
+
+        {/* Connection status for real-time updates */}
+        <div className="connection-status">
+          <h4>Real-time Updates:</h4>
+          <div className="status-indicator">
+            <span className={`status-dot ${connectionStatus.connected ? 'connected' : 'disconnected'}`}></span>
+            <span className="status-text">
+              {connectionStatus.connected ? 'Connected' : connectionStatus.polling ? 'Polling' : 'Disconnected'}
+            </span>
+          </div>
+          <small>You'll be notified when your pass is updated by the restaurant</small>
         </div>
 
         {/* Alternative download methods for testing */}
