@@ -64,6 +64,10 @@ const PassManager = () => {
     }
   };
 
+  const handleModifyPass = (passId) => {
+    navigate(`/create?brandId=${brandId}&passId=${passId}`);
+  };
+
   const handleBackToDashboard = () => {
     navigate('/dashboard');
   };
@@ -235,6 +239,12 @@ const PassManager = () => {
                       onClick={() => handleViewPass(pass.passId)}
                     >
                       View QR Code
+                    </button>
+                    <button 
+                      className="btn btn-warning"
+                      onClick={() => handleModifyPass(pass.passId)}
+                    >
+                      Modify Pass
                     </button>
                     <button 
                       className="btn btn-primary"

@@ -277,6 +277,23 @@
   font-size: 0.875rem;
 }
 
+/* Warning button style */
+.btn-warning {
+  background: #f59e0b;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.btn-warning:hover:not(:disabled) {
+  background: #d97706;
+}
+
 /* Loading and Error States */
 .loading-container,
 .error-container {
