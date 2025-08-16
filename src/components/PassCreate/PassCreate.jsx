@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { createPassTemplate } from '../../services/api';
 import { COLOR_PRESETS, VALIDATION_RULES, ERROR_MESSAGES } from '../../utils/constants';
 import AddressAutocomplete from './AddressAutocomplete';
@@ -10,10 +10,12 @@ import './PassCreate.css';
 
 const PassCreate = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [createdTemplate, setCreatedTemplate] = useState(null);
+  const [currentBrand, setCurrentBrand] = useState(null);
   
   const [formData, setFormData] = useState({
     brandName: '',
@@ -42,6 +44,26 @@ const PassCreate = () => {
     logo: null,
     strip: null
   });
+
+  // Load brand data if brandId is provided
+  useEffect(() => {
+    const brandId = searchParams.get('brandId');
+    if (brandId) {
+      const savedBrands = localStorage.getItem('brands');
+      if (savedBrands) {
+        const brands = JSON.parse(savedBrands);
+        const brand = brands.find(b => b.id === brandId);
+        if (brand) {
+          setCurrentBrand(brand);
+          setFormData(prev => ({
+            ...prev,
+            brandName: brand.name,
+            brandId: brand.id
+          }));
+        }
+      }
+    }
+  }, [searchParams]);
 
   // Image validation function
   const validateImage = (file) => {
@@ -194,6 +216,31 @@ const PassCreate = () => {
       }
 
       const result = await createPassTemplate(formDataToSend);
+      
+      // Save pass to brand's passes if we have a brandId
+      if (currentBrand) {
+        const savedPasses = localStorage.getItem(`passes_${currentBrand.id}`) || '[]';
+        const passes = JSON.parse(savedPasses);
+        const newPass = {
+          ...result,
+          createdAt: new Date().toISOString(),
+          status: 'active'
+        };
+        passes.push(newPass);
+        localStorage.setItem(`passes_${currentBrand.id}`, JSON.stringify(passes));
+        
+        // Update brand's pass count
+        const savedBrands = localStorage.getItem('brands');
+        if (savedBrands) {
+          const brands = JSON.parse(savedBrands);
+          const updatedBrands = brands.map(b => 
+            b.id === currentBrand.id 
+              ? { ...b, passCount: b.passCount + 1 }
+              : b
+          );
+          localStorage.setItem('brands', JSON.stringify(updatedBrands));
+        }
+      }
       
       setCreatedTemplate(result);
       setSuccess(true);
