@@ -156,56 +156,44 @@ const PassCreate = () => {
     setError('');
 
     try {
-      // Create FormData for file upload
+      // Create FormData with all template data
       const formDataToSend = new FormData();
-      formDataToSend.append('brandName', formData.brandName);
-      formDataToSend.append('promotionalText', formData.promoText);
-      formDataToSend.append('address', formData.address);
-      formDataToSend.append('backgroundColor', formData.backgroundColor);
-      formDataToSend.append('textColor', formData.foregroundColor);
-      formDataToSend.append('brandId', formData.brandId || `brand-${Date.now()}`);
+      
+      // Prepare template data object
+      const templateData = {
+        brandName: formData.brandName,
+        address: formData.address,
+        promoText: formData.promoText,
+        backgroundColor: formData.backgroundColor,
+        foregroundColor: formData.foregroundColor,
+        brandId: formData.brandId || `brand-${Date.now()}`
+      };
       
       // Add location data if available
       if (locationData.latitude && locationData.longitude) {
-        formDataToSend.append('latitude', locationData.latitude);
-        formDataToSend.append('longitude', locationData.longitude);
+        templateData.latitude = locationData.latitude;
+        templateData.longitude = locationData.longitude;
       }
       
-      // Check if we have any images
-      const hasImages = imageFiles.icon || imageFiles.logo || imageFiles.strip;
-      let result;
-      
-      if (hasImages) {
-        // Add image files
-        if (imageFiles.icon) formDataToSend.append('iconImage', imageFiles.icon);
-        if (imageFiles.logo) formDataToSend.append('logoImage', imageFiles.logo);
-        if (imageFiles.strip) formDataToSend.append('stripImage', imageFiles.strip);
-
-        // Debug: Log what we're sending
-        console.log('FormData contents:');
-        for (let [key, value] of formDataToSend.entries()) {
-          console.log(`${key}:`, value);
+      // Add each field to FormData (only if not null/undefined)
+      Object.keys(templateData).forEach(key => {
+        if (templateData[key] !== null && templateData[key] !== undefined) {
+          formDataToSend.append(key, templateData[key]);
         }
+      });
+      
+      // Add image files if provided
+      if (imageFiles.icon) formDataToSend.append('iconImage', imageFiles.icon);
+      if (imageFiles.logo) formDataToSend.append('logoImage', imageFiles.logo);
+      if (imageFiles.strip) formDataToSend.append('stripImage', imageFiles.strip);
 
-        result = await createPassTemplate(formDataToSend);
-      } else {
-        // Use JSON format if no images
-        const templateData = {
-          brandName: formData.brandName,
-          promotionalText: formData.promoText,
-          address: formData.address,
-          backgroundColor: formData.backgroundColor,
-          textColor: formData.foregroundColor,
-          brandId: formData.brandId || `brand-${Date.now()}`,
-          ...(locationData.latitude && locationData.longitude && {
-            latitude: locationData.latitude,
-            longitude: locationData.longitude
-          })
-        };
-
-        console.log('JSON data:', templateData);
-        result = await createPassTemplate(templateData);
+      // Debug: Log what we're sending
+      console.log('FormData contents:');
+      for (let [key, value] of formDataToSend.entries()) {
+        console.log(`${key}:`, value);
       }
+
+      const result = await createPassTemplate(formDataToSend);
       
       setCreatedTemplate(result);
       setSuccess(true);

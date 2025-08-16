@@ -35,34 +35,25 @@ const apiCall = async (endpoint, options = {}) => {
 
 // Pass Template API calls
 export const createPassTemplate = async (templateData) => {
-  // Check if templateData is FormData (for file uploads) or regular object
-  if (templateData instanceof FormData) {
-    // For FormData, we need to make a direct fetch call without the default headers
-    const url = `${API_BASE_URL}/api/passes/templates`;
-    
-    try {
-      const response = await fetch(url, {
-        method: 'POST',
-        body: templateData,
-        // Don't set Content-Type header - browser will set it with boundary for FormData
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error('API Error:', error);
-      throw error;
-    }
-  } else {
-    // Fallback for JSON data
-    return apiCall('/api/passes/templates/json', {
+  // Always use FormData for the backend
+  const url = `${API_BASE_URL}/api/passes/templates`;
+  
+  try {
+    const response = await fetch(url, {
       method: 'POST',
-      body: JSON.stringify(templateData),
+      body: templateData,
+      // Don't set Content-Type header - browser will set it with boundary for FormData
     });
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API Error:', error);
+    throw error;
   }
 };
 
