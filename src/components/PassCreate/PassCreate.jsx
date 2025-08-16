@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { createPassTemplate, getPassTemplate, updatePassTemplate } from '../../services/api';
+import { createPassTemplate } from '../../services/api';
 import { COLOR_PRESETS, VALIDATION_RULES, ERROR_MESSAGES } from '../../utils/constants';
 import AddressAutocomplete from './AddressAutocomplete';
 import Loading from '../common/Loading';
@@ -16,7 +16,6 @@ const PassCreate = () => {
   const [success, setSuccess] = useState(false);
   const [createdTemplate, setCreatedTemplate] = useState(null);
   const [currentBrand, setCurrentBrand] = useState(null);
-  const [editingPassId, setEditingPassId] = useState(null); // New state for editing pass ID
   
   const [formData, setFormData] = useState({
     brandName: '',
@@ -46,11 +45,9 @@ const PassCreate = () => {
     strip: null
   });
 
-  // Load brand data if brandId is provided, and pass data if passId is provided
+  // Load brand data if brandId is provided
   useEffect(() => {
     const brandId = searchParams.get('brandId');
-    const passId = searchParams.get('passId');
-    
     if (brandId) {
       const savedBrands = localStorage.getItem('brands');
       if (savedBrands) {
@@ -65,47 +62,6 @@ const PassCreate = () => {
           }));
         }
       }
-    }
-    
-    // Load existing pass data if passId is provided (edit mode)
-    if (passId) {
-      const loadExistingPass = async () => {
-        try {
-          setLoading(true);
-          const passData = await getPassTemplate(passId);
-          
-          // Pre-fill form with existing pass data
-          setFormData(prev => ({
-            ...prev,
-            brandName: passData.brandName || '',
-            address: passData.address || '',
-            promoText: passData.promoText || '',
-            backgroundColor: passData.backgroundColor || '#ffffff',
-            foregroundColor: passData.foregroundColor || '#000000',
-            brandId: passData.brandId || ''
-          }));
-          
-          // Set location data if available
-          if (passData.latitude && passData.longitude) {
-            setLocationData({
-              latitude: passData.latitude,
-              longitude: passData.longitude,
-              placeId: passData.placeId || null
-            });
-          }
-          
-          // Store the passId for update operation
-          setEditingPassId(passId);
-          
-        } catch (error) {
-          console.error('Error loading existing pass:', error);
-          setError('Failed to load existing pass data');
-        } finally {
-          setLoading(false);
-        }
-      };
-      
-      loadExistingPass();
     }
   }, [searchParams]);
 
@@ -259,52 +215,30 @@ const PassCreate = () => {
         console.log(`${key}:`, value);
       }
 
-      let result;
-      
-      if (editingPassId) {
-        // Update existing pass
-        result = await updatePassTemplate(editingPassId, formDataToSend);
-        console.log('Pass updated:', result);
-      } else {
-        // Create new pass
-        result = await createPassTemplate(formDataToSend);
-        console.log('Pass created:', result);
-      }
+      const result = await createPassTemplate(formDataToSend);
       
       // Save pass to brand's passes if we have a brandId
       if (currentBrand) {
         const savedPasses = localStorage.getItem(`passes_${currentBrand.id}`) || '[]';
         const passes = JSON.parse(savedPasses);
+        const newPass = {
+          ...result,
+          createdAt: new Date().toISOString(),
+          status: 'active'
+        };
+        passes.push(newPass);
+        localStorage.setItem(`passes_${currentBrand.id}`, JSON.stringify(passes));
         
-        if (editingPassId) {
-          // Update existing pass in localStorage
-          const updatedPasses = passes.map(pass => 
-            pass.passId === editingPassId 
-              ? { ...pass, ...result, updatedAt: new Date().toISOString() }
-              : pass
+        // Update brand's pass count
+        const savedBrands = localStorage.getItem('brands');
+        if (savedBrands) {
+          const brands = JSON.parse(savedBrands);
+          const updatedBrands = brands.map(b => 
+            b.id === currentBrand.id 
+              ? { ...b, passCount: b.passCount + 1 }
+              : b
           );
-          localStorage.setItem(`passes_${currentBrand.id}`, JSON.stringify(updatedPasses));
-        } else {
-          // Add new pass to localStorage
-          const newPass = {
-            ...result,
-            createdAt: new Date().toISOString(),
-            status: 'active'
-          };
-          passes.push(newPass);
-          localStorage.setItem(`passes_${currentBrand.id}`, JSON.stringify(passes));
-          
-          // Update brand's pass count
-          const savedBrands = localStorage.getItem('brands');
-          if (savedBrands) {
-            const brands = JSON.parse(savedBrands);
-            const updatedBrands = brands.map(b => 
-              b.id === currentBrand.id 
-                ? { ...b, passCount: b.passCount + 1 }
-                : b
-            );
-            localStorage.setItem('brands', JSON.stringify(updatedBrands));
-          }
+          localStorage.setItem('brands', JSON.stringify(updatedBrands));
         }
       }
       
@@ -360,7 +294,7 @@ const PassCreate = () => {
     return (
       <div className="pass-create-success">
         <SuccessMessage 
-          message={`Pass template "${createdTemplate.brandName}" ${editingPassId ? 'updated' : 'created'} successfully!`}
+          message={`Pass template "${createdTemplate.brandName}" created successfully!`}
           actionText="View QR Code"
           onAction={() => navigate(`/qr/${createdTemplate.passId}`)}
         />
@@ -389,8 +323,8 @@ const PassCreate = () => {
   return (
     <div className="pass-create">
       <div className="pass-create-header">
-        <h1>{editingPassId ? 'Edit Apple Pass Template' : 'Create Apple Pass Template'}</h1>
-        <p>{editingPassId ? 'Update your Apple Wallet pass design' : 'Design your Apple Wallet pass for customers to download'}</p>
+        <h1>Create Apple Pass Template</h1>
+        <p>Design your Apple Wallet pass for customers to download</p>
       </div>
 
       <form onSubmit={handleSubmit} className="pass-create-form">
@@ -636,9 +570,9 @@ const PassCreate = () => {
           <button type="button" className="btn btn-secondary" onClick={handleReset}>
             Reset Form
           </button>
-                  <button type="submit" className="btn btn-primary">
-          {editingPassId ? 'Update Pass Template' : 'Create Pass Template'}
-        </button>
+          <button type="submit" className="btn btn-primary">
+            Create Pass Template
+          </button>
         </div>
       </form>
     </div>

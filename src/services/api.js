@@ -57,29 +57,6 @@ export const createPassTemplate = async (templateData) => {
   }
 };
 
-export const updatePassTemplate = async (passId, templateData) => {
-  // Always use FormData for the backend
-  const url = `${API_BASE_URL}/api/passes/templates/${passId}`;
-  
-  try {
-    const response = await fetch(url, {
-      method: 'PUT',
-      body: templateData,
-      // Don't set Content-Type header - browser will set it with boundary for FormData
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('API Error:', error);
-    throw error;
-  }
-};
-
 export const getPassTemplate = async (passId) => {
   return apiCall(`/api/passes/templates/${passId}`);
 };
