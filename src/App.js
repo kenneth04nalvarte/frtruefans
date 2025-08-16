@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import NavBar from './components/common/NavBar';
 import Dashboard from './components/Dashboard/Dashboard';
 import PassManager from './components/PassManager/PassManager';
 import PassCreate from './components/PassCreate/PassCreate';
@@ -13,20 +14,23 @@ function App() {
   return (
     <Router>
       <div className="App">
-        <Routes>
-          {/* Main routes */}
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/brand/:brandId/passes" element={<PassManager />} />
-          <Route path="/create" element={<PassCreate />} />
-          <Route path="/modify/:passId" element={<ModifyPass />} />
-          <Route path="/register/:passId" element={<DinerRegistration />} />
-          <Route path="/diner/:serialNumber" element={<DinerView />} />
-          <Route path="/qr/:passId" element={<QRCodeDisplay />} />
-          
-          {/* Catch all route */}
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
-        </Routes>
+        <NavBar />
+        <div className="app-content">
+          <Routes>
+            {/* Main routes */}
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/brand/:brandId/passes" element={<PassManager />} />
+            <Route path="/create" element={<PassCreate />} />
+            <Route path="/modify/:passId" element={<ModifyPass />} />
+            <Route path="/register/:passId" element={<DinerRegistration />} />
+            <Route path="/diner/:serialNumber" element={<DinerView />} />
+            <Route path="/qr/:passId" element={<QRCodeDisplay />} />
+            
+            {/* Catch all route */}
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          </Routes>
+        </div>
       </div>
     </Router>
   );
