@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { initializeAddressAutocomplete } from '../../services/googleMaps';
 
 const AddressAutocomplete = ({ 
@@ -11,6 +11,8 @@ const AddressAutocomplete = ({
   className = ""
 }) => {
   const inputRef = useRef(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     if (inputRef.current && !disabled) {
@@ -18,30 +20,50 @@ const AddressAutocomplete = ({
 
       const initAutocomplete = async () => {
         try {
+          setIsLoading(true);
+          setError(null);
+          
           autocomplete = await initializeAddressAutocomplete(
             inputRef.current,
             (placeData) => {
-              // Update the input value with the formatted address
-              onChange(placeData.address);
+              console.log('AddressAutocomplete: Place selected:', placeData);
               
-              // Call the onPlaceSelect callback with full place data
-              if (onPlaceSelect) {
-                onPlaceSelect(placeData);
+              // Update the input value with the formatted address
+              if (placeData && placeData.address) {
+                onChange(placeData.address);
+                
+                // Call the onPlaceSelect callback with full place data
+                if (onPlaceSelect) {
+                  onPlaceSelect(placeData);
+                }
               }
             }
           );
+          
+          console.log('AddressAutocomplete: Initialized successfully');
         } catch (error) {
           console.error('Failed to initialize address autocomplete:', error);
+          setError('Failed to load address autocomplete. Please check your Google Maps API key.');
+        } finally {
+          setIsLoading(false);
         }
       };
 
-      initAutocomplete();
+      // Add a small delay to ensure the input is fully rendered
+      const timer = setTimeout(() => {
+        initAutocomplete();
+      }, 100);
 
       // Cleanup function
       return () => {
+        clearTimeout(timer);
         if (autocomplete) {
-          // Remove event listeners if needed
-          window.google?.maps?.event?.clearInstanceListeners?.(autocomplete);
+          try {
+            // Remove event listeners if needed
+            window.google?.maps?.event?.clearInstanceListeners?.(autocomplete);
+          } catch (e) {
+            console.warn('Error cleaning up autocomplete:', e);
+          }
         }
       };
     }
@@ -53,20 +75,40 @@ const AddressAutocomplete = ({
 
   return (
     <div className={`address-autocomplete ${className}`}>
-      <input
-        ref={inputRef}
-        type="text"
-        value={value}
-        onChange={handleInputChange}
-        placeholder={placeholder}
-        required={required}
-        disabled={disabled}
-        className="address-input"
-        autoComplete="off"
-      />
-      {disabled && (
+      <div className="input-container">
+        <input
+          ref={inputRef}
+          type="text"
+          value={value}
+          onChange={handleInputChange}
+          placeholder={isLoading ? "Loading autocomplete..." : placeholder}
+          required={required}
+          disabled={disabled || isLoading}
+          className="address-input"
+          autoComplete="off"
+        />
+        {isLoading && (
+          <div className="autocomplete-loading">
+            <small>Loading address autocomplete...</small>
+          </div>
+        )}
+      </div>
+      
+      {error && (
+        <div className="autocomplete-error">
+          <small>{error}</small>
+        </div>
+      )}
+      
+      {disabled && !error && (
         <div className="autocomplete-disabled">
           <small>Address autocomplete is disabled. Please check your Google Maps API key.</small>
+        </div>
+      )}
+      
+      {!disabled && !isLoading && !error && (
+        <div className="autocomplete-help">
+          <small>Start typing to see address suggestions</small>
         </div>
       )}
     </div>
