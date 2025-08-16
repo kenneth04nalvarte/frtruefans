@@ -16,7 +16,6 @@ const DinerRegistration = () => {
   
   const [dinerData, setDinerData] = useState({
     firstName: '',
-    lastName: '',
     email: '',
     phone: '',
     birthday: '',
@@ -50,7 +49,7 @@ const DinerRegistration = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!dinerData.firstName || !dinerData.lastName || !dinerData.email) {
+    if (!dinerData.firstName || !dinerData.email) {
       setError('Please fill in all required fields');
       return;
     }
@@ -139,30 +138,16 @@ const DinerRegistration = () => {
           <div className="form-section">
             <h3>Personal Information</h3>
             
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="firstName">First Name *</label>
-                <input
-                  type="text"
-                  id="firstName"
-                  value={dinerData.firstName}
-                  onChange={(e) => handleInputChange('firstName', e.target.value)}
-                  placeholder="Enter your first name"
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="lastName">Last Name *</label>
-                <input
-                  type="text"
-                  id="lastName"
-                  value={dinerData.lastName}
-                  onChange={(e) => handleInputChange('lastName', e.target.value)}
-                  placeholder="Enter your last name"
-                  required
-                />
-              </div>
+            <div className="form-group">
+              <label htmlFor="firstName">First Name *</label>
+              <input
+                type="text"
+                id="firstName"
+                value={dinerData.firstName}
+                onChange={(e) => handleInputChange('firstName', e.target.value)}
+                placeholder="Enter your first name"
+                required
+              />
             </div>
 
             <div className="form-group">

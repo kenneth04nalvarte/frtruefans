@@ -83,11 +83,7 @@
   font-weight: 600;
 }
 
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-}
+
 
 .form-group {
   margin-bottom: 1.5rem;
