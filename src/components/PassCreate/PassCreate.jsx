@@ -171,12 +171,41 @@ const PassCreate = () => {
         formDataToSend.append('longitude', locationData.longitude);
       }
       
-      // Add image files
-      if (imageFiles.icon) formDataToSend.append('iconImage', imageFiles.icon);
-      if (imageFiles.logo) formDataToSend.append('logoImage', imageFiles.logo);
-      if (imageFiles.strip) formDataToSend.append('stripImage', imageFiles.strip);
+      // Check if we have any images
+      const hasImages = imageFiles.icon || imageFiles.logo || imageFiles.strip;
+      let result;
+      
+      if (hasImages) {
+        // Add image files
+        if (imageFiles.icon) formDataToSend.append('iconImage', imageFiles.icon);
+        if (imageFiles.logo) formDataToSend.append('logoImage', imageFiles.logo);
+        if (imageFiles.strip) formDataToSend.append('stripImage', imageFiles.strip);
 
-      const result = await createPassTemplate(formDataToSend);
+        // Debug: Log what we're sending
+        console.log('FormData contents:');
+        for (let [key, value] of formDataToSend.entries()) {
+          console.log(`${key}:`, value);
+        }
+
+        result = await createPassTemplate(formDataToSend);
+      } else {
+        // Use JSON format if no images
+        const templateData = {
+          brandName: formData.brandName,
+          promotionalText: formData.promoText,
+          address: formData.address,
+          backgroundColor: formData.backgroundColor,
+          textColor: formData.foregroundColor,
+          brandId: formData.brandId || `brand-${Date.now()}`,
+          ...(locationData.latitude && locationData.longitude && {
+            latitude: locationData.latitude,
+            longitude: locationData.longitude
+          })
+        };
+
+        console.log('JSON data:', templateData);
+        result = await createPassTemplate(templateData);
+      }
       
       setCreatedTemplate(result);
       setSuccess(true);
