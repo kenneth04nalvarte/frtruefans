@@ -30,6 +30,77 @@ const PassCreate = () => {
     placeId: null
   });
 
+  // Image upload state
+  const [imageFiles, setImageFiles] = useState({
+    icon: null,
+    logo: null,
+    strip: null
+  });
+
+  const [imagePreviews, setImagePreviews] = useState({
+    icon: null,
+    logo: null,
+    strip: null
+  });
+
+  // Image validation function
+  const validateImage = (file) => {
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+    
+    if (file.size > maxSize) {
+      return 'Image size must be less than 5MB';
+    }
+    
+    if (!allowedTypes.includes(file.type)) {
+      return 'Only JPEG, PNG, and GIF images are allowed';
+    }
+    
+    return null;
+  };
+
+  // Handle image upload
+  const handleImageChange = (e, type) => {
+    const file = e.target.files[0];
+    if (file) {
+      const error = validateImage(file);
+      if (error) {
+        setError(error);
+        return;
+      }
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreviews(prev => ({
+          ...prev,
+          [type]: e.target.result
+        }));
+      };
+      reader.readAsDataURL(file);
+      
+      // Store file for form submission
+      setImageFiles(prev => ({
+        ...prev,
+        [type]: file
+      }));
+      
+      setError(''); // Clear any previous errors
+    }
+  };
+
+  // Remove image
+  const handleRemoveImage = (type) => {
+    setImageFiles(prev => ({
+      ...prev,
+      [type]: null
+    }));
+    setImagePreviews(prev => ({
+      ...prev,
+      [type]: null
+    }));
+  };
+
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
       ...prev,
@@ -85,18 +156,27 @@ const PassCreate = () => {
     setError('');
 
     try {
-      const templateData = {
-        ...formData,
-        // Auto-generate brandId if not provided
-        brandId: formData.brandId || `brand-${Date.now()}`,
-        // Include location data if available
-        ...(locationData.latitude && locationData.longitude && {
-          latitude: locationData.latitude,
-          longitude: locationData.longitude
-        })
-      };
+      // Create FormData for file upload
+      const formDataToSend = new FormData();
+      formDataToSend.append('brandName', formData.brandName);
+      formDataToSend.append('promotionalText', formData.promoText);
+      formDataToSend.append('address', formData.address);
+      formDataToSend.append('backgroundColor', formData.backgroundColor);
+      formDataToSend.append('textColor', formData.foregroundColor);
+      formDataToSend.append('brandId', formData.brandId || `brand-${Date.now()}`);
+      
+      // Add location data if available
+      if (locationData.latitude && locationData.longitude) {
+        formDataToSend.append('latitude', locationData.latitude);
+        formDataToSend.append('longitude', locationData.longitude);
+      }
+      
+      // Add image files
+      if (imageFiles.icon) formDataToSend.append('iconImage', imageFiles.icon);
+      if (imageFiles.logo) formDataToSend.append('logoImage', imageFiles.logo);
+      if (imageFiles.strip) formDataToSend.append('stripImage', imageFiles.strip);
 
-      const result = await createPassTemplate(templateData);
+      const result = await createPassTemplate(formDataToSend);
       
       setCreatedTemplate(result);
       setSuccess(true);
@@ -126,6 +206,16 @@ const PassCreate = () => {
       latitude: null,
       longitude: null,
       placeId: null
+    });
+    setImageFiles({
+      icon: null,
+      logo: null,
+      strip: null
+    });
+    setImagePreviews({
+      icon: null,
+      logo: null,
+      strip: null
     });
     setError('');
     setSuccess(false);
@@ -238,6 +328,112 @@ const PassCreate = () => {
               placeholder="Leave empty to auto-generate"
             />
             <small>Used to group related passes. Auto-generated if not provided.</small>
+          </div>
+        </div>
+
+        <div className="form-section">
+          <h3>Pass Images</h3>
+          <p className="section-description">Upload images for your pass. All images are optional but recommended for better appearance.</p>
+          
+          <div className="image-upload-grid">
+            {/* Icon Image */}
+            <div className="image-preview">
+              <label htmlFor="iconImage" className="image-upload-label">
+                <div className="upload-area">
+                  {imagePreviews.icon ? (
+                    <img src={imagePreviews.icon} alt="Icon preview" />
+                  ) : (
+                    <div className="upload-placeholder">
+                      <span className="upload-icon">📱</span>
+                      <span>Icon Image</span>
+                      <small>Recommended: 29x29px</small>
+                    </div>
+                  )}
+                </div>
+                <input
+                  type="file"
+                  id="iconImage"
+                  accept="image/*"
+                  onChange={(e) => handleImageChange(e, 'icon')}
+                  style={{ display: 'none' }}
+                />
+              </label>
+              {imagePreviews.icon && (
+                <button
+                  type="button"
+                  className="remove-image-btn"
+                  onClick={() => handleRemoveImage('icon')}
+                >
+                  Remove
+                </button>
+              )}
+            </div>
+
+            {/* Logo Image */}
+            <div className="image-preview">
+              <label htmlFor="logoImage" className="image-upload-label">
+                <div className="upload-area">
+                  {imagePreviews.logo ? (
+                    <img src={imagePreviews.logo} alt="Logo preview" />
+                  ) : (
+                    <div className="upload-placeholder">
+                      <span className="upload-icon">🏢</span>
+                      <span>Logo Image</span>
+                      <small>Recommended: 160x50px</small>
+                    </div>
+                  )}
+                </div>
+                <input
+                  type="file"
+                  id="logoImage"
+                  accept="image/*"
+                  onChange={(e) => handleImageChange(e, 'logo')}
+                  style={{ display: 'none' }}
+                />
+              </label>
+              {imagePreviews.logo && (
+                <button
+                  type="button"
+                  className="remove-image-btn"
+                  onClick={() => handleRemoveImage('logo')}
+                >
+                  Remove
+                </button>
+              )}
+            </div>
+
+            {/* Strip Image */}
+            <div className="image-preview">
+              <label htmlFor="stripImage" className="image-upload-label">
+                <div className="upload-area">
+                  {imagePreviews.strip ? (
+                    <img src={imagePreviews.strip} alt="Strip preview" />
+                  ) : (
+                    <div className="upload-placeholder">
+                      <span className="upload-icon">🎨</span>
+                      <span>Strip Image</span>
+                      <small>Recommended: 320x123px</small>
+                    </div>
+                  )}
+                </div>
+                <input
+                  type="file"
+                  id="stripImage"
+                  accept="image/*"
+                  onChange={(e) => handleImageChange(e, 'strip')}
+                  style={{ display: 'none' }}
+                />
+              </label>
+              {imagePreviews.strip && (
+                <button
+                  type="button"
+                  className="remove-image-btn"
+                  onClick={() => handleRemoveImage('strip')}
+                >
+                  Remove
+                </button>
+              )}
+            </div>
           </div>
         </div>
 

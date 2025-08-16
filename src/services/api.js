@@ -35,10 +35,20 @@ const apiCall = async (endpoint, options = {}) => {
 
 // Pass Template API calls
 export const createPassTemplate = async (templateData) => {
-  return apiCall('/api/passes/templates/json', {
-    method: 'POST',
-    body: JSON.stringify(templateData),
-  });
+  // Check if templateData is FormData (for file uploads) or regular object
+  if (templateData instanceof FormData) {
+    return apiCall('/api/passes/templates', {
+      method: 'POST',
+      body: templateData,
+      // Don't set Content-Type header - browser will set it with boundary for FormData
+    });
+  } else {
+    // Fallback for JSON data
+    return apiCall('/api/passes/templates/json', {
+      method: 'POST',
+      body: JSON.stringify(templateData),
+    });
+  }
 };
 
 export const getPassTemplate = async (passId) => {
