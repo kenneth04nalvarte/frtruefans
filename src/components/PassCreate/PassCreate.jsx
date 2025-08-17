@@ -8,7 +8,7 @@ import ErrorMessage from '../common/ErrorMessage';
 import SuccessMessage from '../common/SuccessMessage';
 import './PassCreate.css';
 
-const PassCreate = () => {
+const PassCreate = ({ isEditing = false, existingPassId = null, existingData = null, onSuccess = null }) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(false);
@@ -16,23 +16,38 @@ const PassCreate = () => {
   const [success, setSuccess] = useState(false);
   const [createdTemplate, setCreatedTemplate] = useState(null);
   const [currentBrand, setCurrentBrand] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
-  const [existingPassId, setExistingPassId] = useState(null);
+  const [internalIsEditing, setInternalIsEditing] = useState(isEditing);
+  const [internalExistingPassId, setInternalExistingPassId] = useState(existingPassId);
   
-  const [formData, setFormData] = useState({
-    brandName: '',
-    address: '',
-    promoText: '',
-    backgroundColor: '#ffffff',
-    foregroundColor: '#000000',
-    brandId: ''
-  });
+  const [formData, setFormData] = useState(
+    existingData ? {
+      brandName: existingData.brandName || '',
+      address: existingData.address || '',
+      promoText: existingData.promoText || '',
+      backgroundColor: existingData.backgroundColor || '#ffffff',
+      foregroundColor: existingData.foregroundColor || '#000000',
+      brandId: existingData.brandId || ''
+    } : {
+      brandName: '',
+      address: '',
+      promoText: '',
+      backgroundColor: '#ffffff',
+      foregroundColor: '#000000',
+      brandId: ''
+    }
+  );
 
-  const [locationData, setLocationData] = useState({
-    latitude: null,
-    longitude: null,
-    placeId: null
-  });
+  const [locationData, setLocationData] = useState(
+    existingData ? {
+      latitude: existingData.latitude || null,
+      longitude: existingData.longitude || null,
+      placeId: existingData.placeId || null
+    } : {
+      latitude: null,
+      longitude: null,
+      placeId: null
+    }
+  );
 
   // Image upload state
   const [imageFiles, setImageFiles] = useState({
@@ -52,6 +67,10 @@ const PassCreate = () => {
     const brandId = searchParams.get('brandId');
     const editPassId = searchParams.get('editPassId');
     
+    // Use props if provided, otherwise use URL parameters
+    const finalIsEditing = isEditing || editPassId;
+    const finalExistingPassId = existingPassId || editPassId;
+    
     if (brandId) {
       const savedBrands = localStorage.getItem('brands');
       if (savedBrands) {
@@ -69,12 +88,12 @@ const PassCreate = () => {
     }
     
     // Check if we're editing an existing pass
-    if (editPassId) {
-      setIsEditing(true);
-      setExistingPassId(editPassId);
-      loadExistingPassData(editPassId);
+    if (finalIsEditing && finalExistingPassId && !existingData) {
+      setInternalIsEditing(true);
+      setInternalExistingPassId(finalExistingPassId);
+      loadExistingPassData(finalExistingPassId);
     }
-  }, [searchParams]);
+  }, [searchParams, isEditing, existingPassId, existingData]);
   
   // Load existing pass data for editing
   const loadExistingPassData = async (passId) => {
@@ -244,9 +263,9 @@ const PassCreate = () => {
       let result;
       
       // Use the correct API call based on create vs update mode
-      if (isEditing && existingPassId) {
+      if (internalIsEditing && internalExistingPassId) {
         // UPDATE existing pass
-        result = await updatePassTemplateWithImages(existingPassId, templateData, imageFiles);
+        result = await updatePassTemplateWithImages(internalExistingPassId, templateData, imageFiles);
       } else {
         // CREATE new pass
         result = await createPassTemplateWithImages(templateData, imageFiles);
@@ -282,7 +301,10 @@ const PassCreate = () => {
       
       // Navigate based on create vs update mode
       setTimeout(() => {
-        if (isEditing) {
+        if (onSuccess) {
+          // Use provided success callback
+          onSuccess();
+        } else if (internalIsEditing) {
           // For updates, go back to pass manager
           const brandId = searchParams.get('brandId');
           if (brandId) {
@@ -297,7 +319,7 @@ const PassCreate = () => {
       }, 2000);
       
     } catch (err) {
-      setError(err.message || 'Failed to create pass template');
+      setError(err.message || `Failed to ${internalIsEditing ? 'update' : 'create'} pass template`);
     } finally {
       setLoading(false);
     }
@@ -333,17 +355,19 @@ const PassCreate = () => {
   };
 
   if (loading) {
-    return <Loading message={isEditing ? "Loading pass data..." : "Creating your pass template..."} size="large" />;
+    return <Loading message={internalIsEditing ? "Loading pass data..." : "Creating your pass template..."} size="large" />;
   }
 
   if (success && createdTemplate) {
     return (
       <div className="pass-create-success">
         <SuccessMessage 
-          message={`Pass template "${createdTemplate.brandName}" ${isEditing ? 'updated' : 'created'} successfully!`}
-          actionText={isEditing ? "Go to Pass Manager" : "View QR Code"}
+          message={`Pass template "${createdTemplate.brandName}" ${internalIsEditing ? 'updated' : 'created'} successfully!`}
+          actionText={internalIsEditing ? "Go to Pass Manager" : "View QR Code"}
           onAction={() => {
-            if (isEditing) {
+            if (onSuccess) {
+              onSuccess();
+            } else if (internalIsEditing) {
               const brandId = searchParams.get('brandId');
               if (brandId) {
                 navigate(`/brand/${brandId}/passes`);
@@ -380,8 +404,8 @@ const PassCreate = () => {
   return (
     <div className="pass-create">
       <div className="pass-create-header">
-        <h1>{isEditing ? 'Edit Apple Pass Template' : 'Create Apple Pass Template'}</h1>
-        <p>{isEditing ? 'Update your Apple Wallet pass template' : 'Design your Apple Wallet pass for customers to download'}</p>
+        <h1>{internalIsEditing ? 'Edit Apple Pass Template' : 'Create Apple Pass Template'}</h1>
+        <p>{internalIsEditing ? 'Update your Apple Wallet pass template' : 'Design your Apple Wallet pass for customers to download'}</p>
       </div>
 
       <form onSubmit={handleSubmit} className="pass-create-form">
@@ -628,7 +652,7 @@ const PassCreate = () => {
             Reset Form
           </button>
                   <button type="submit" className="btn btn-primary">
-          {isEditing ? 'Update Pass Template' : 'Create Pass Template'}
+          {internalIsEditing ? 'Update Pass Template' : 'Create Pass Template'}
         </button>
         </div>
       </form>
