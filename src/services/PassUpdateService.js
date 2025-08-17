@@ -13,7 +13,7 @@ class PassUpdateService {
     this.userId = userId;
     this.onUpdateCallback = onUpdateCallback;
     
-    const url = `https://applepass-ojhsb2liva-uc.a.run.app/api/sse/subscribe/${userId}`;
+    const url = `https://applepass-originator-ojhsb2liva-uc.a.run.app/api/sse/subscribe/${userId}`;
     this.eventSource = new EventSource(url);
     
     this.eventSource.onopen = () => {
@@ -48,7 +48,7 @@ class PassUpdateService {
       return;
     }
 
-    fetch(`https://applepass-ojhsb2liva-uc.a.run.app/api/sse/subscribe/${this.userId}/pass/${passId}`, {
+    fetch(`https://applepass-originator-ojhsb2liva-uc.a.run.app/api/sse/subscribe/${this.userId}/pass/${passId}`, {
       method: 'POST'
     })
     .then(response => {
@@ -110,7 +110,7 @@ class PassUpdateService {
 
   checkForUpdates() {
     // Implement polling logic here
-    fetch(`https://applepass-ojhsb2liva-uc.a.run.app/api/passes/check-updates/${this.userId}`)
+    fetch(`https://applepass-originator-ojhsb2liva-uc.a.run.app/api/passes/check-updates/${this.userId}`)
       .then(response => response.json())
       .then(updates => {
         if (updates.length > 0) {
