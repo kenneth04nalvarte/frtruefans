@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { createPassTemplate, updatePassTemplate, getPassTemplate } from '../../services/api';
+import { createPassTemplateWithImages, updatePassTemplateWithImages, getPassTemplate } from '../../services/api';
 import { COLOR_PRESETS, VALIDATION_RULES, ERROR_MESSAGES } from '../../utils/constants';
 import AddressAutocomplete from './AddressAutocomplete';
 import Loading from '../common/Loading';
@@ -221,9 +221,6 @@ const PassCreate = () => {
     setError('');
 
     try {
-      // Create FormData with all template data
-      const formDataToSend = new FormData();
-      
       // Prepare template data object
       const templateData = {
         brandName: formData.brandName,
@@ -239,34 +236,20 @@ const PassCreate = () => {
         templateData.latitude = locationData.latitude;
         templateData.longitude = locationData.longitude;
       }
-      
-      // Add each field to FormData (only if not null/undefined)
-      Object.keys(templateData).forEach(key => {
-        if (templateData[key] !== null && templateData[key] !== undefined) {
-          formDataToSend.append(key, templateData[key]);
-        }
-      });
-      
-      // Add image files if provided
-      if (imageFiles.icon) formDataToSend.append('iconImage', imageFiles.icon);
-      if (imageFiles.logo) formDataToSend.append('logoImage', imageFiles.logo);
-      if (imageFiles.strip) formDataToSend.append('stripImage', imageFiles.strip);
 
       // Debug: Log what we're sending
-      console.log('FormData contents:');
-      for (let [key, value] of formDataToSend.entries()) {
-        console.log(`${key}:`, value);
-      }
+      console.log('Template data:', templateData);
+      console.log('Image files:', imageFiles);
 
       let result;
       
       // Use the correct API call based on create vs update mode
       if (isEditing && existingPassId) {
         // UPDATE existing pass
-        result = await updatePassTemplate(existingPassId, formDataToSend);
+        result = await updatePassTemplateWithImages(existingPassId, templateData, imageFiles);
       } else {
         // CREATE new pass
-        result = await createPassTemplate(formDataToSend);
+        result = await createPassTemplateWithImages(templateData, imageFiles);
       }
       
       // Save pass to brand's passes if we have a brandId

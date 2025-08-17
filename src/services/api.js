@@ -80,6 +80,42 @@ export const updatePassTemplate = async (passId, templateData) => {
   }
 };
 
+export const createPassTemplateWithImages = async (templateData, imageFiles) => {
+  const formData = new FormData();
+  
+  // Add template data
+  Object.keys(templateData).forEach(key => {
+    if (templateData[key] !== null && templateData[key] !== undefined) {
+      formData.append(key, templateData[key]);
+    }
+  });
+  
+  // Add image files if provided
+  if (imageFiles.icon) formData.append('iconImage', imageFiles.icon);
+  if (imageFiles.logo) formData.append('logoImage', imageFiles.logo);
+  if (imageFiles.strip) formData.append('stripImage', imageFiles.strip);
+  
+  return createPassTemplate(formData);
+};
+
+export const updatePassTemplateWithImages = async (passId, templateData, imageFiles) => {
+  const formData = new FormData();
+  
+  // Add template data
+  Object.keys(templateData).forEach(key => {
+    if (templateData[key] !== null && templateData[key] !== undefined) {
+      formData.append(key, templateData[key]);
+    }
+  });
+  
+  // Add image files if provided
+  if (imageFiles.icon) formData.append('iconImage', imageFiles.icon);
+  if (imageFiles.logo) formData.append('logoImage', imageFiles.logo);
+  if (imageFiles.strip) formData.append('stripImage', imageFiles.strip);
+  
+  return updatePassTemplate(passId, formData);
+};
+
 export const getPassTemplate = async (passId) => {
   return apiCall(`/api/passes/templates/${passId}`);
 };

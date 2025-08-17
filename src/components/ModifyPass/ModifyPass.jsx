@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { updatePassTemplate, getPassTemplate } from '../../services/api';
+import { updatePassTemplateWithImages, getPassTemplate } from '../../services/api';
 import { COLOR_PRESETS, VALIDATION_RULES, ERROR_MESSAGES } from '../../utils/constants';
 import AddressAutocomplete from '../PassCreate/AddressAutocomplete';
 import Loading from '../common/Loading';
@@ -171,8 +171,6 @@ const ModifyPass = () => {
     setError('');
 
     try {
-      const formDataToSend = new FormData();
-      
       // Prepare template data object
       const templateData = {
         brandName: formData.brandName,
@@ -190,26 +188,12 @@ const ModifyPass = () => {
         templateData.longitude = locationData.longitude;
       }
 
-      // Add each field to FormData
-      Object.keys(templateData).forEach(key => {
-        if (templateData[key] !== null && templateData[key] !== undefined) {
-          formDataToSend.append(key, templateData[key]);
-        }
-      });
-
-      // Add image files if provided
-      if (imageFiles.icon) formDataToSend.append('iconImage', imageFiles.icon);
-      if (imageFiles.logo) formDataToSend.append('logoImage', imageFiles.logo);
-      if (imageFiles.strip) formDataToSend.append('stripImage', imageFiles.strip);
-
-      console.log('FormData contents for update:');
-      for (let [key, value] of formDataToSend.entries()) {
-        console.log(`${key}:`, value);
-      }
+      console.log('Template data for update:', templateData);
+      console.log('Image files for update:', imageFiles);
 
       // Use PUT method to update existing pass
       // eslint-disable-next-line no-unused-vars
-      const result = await updatePassTemplate(passId, formDataToSend);
+      const result = await updatePassTemplateWithImages(passId, templateData, imageFiles);
 
       setSuccess(true);
       
