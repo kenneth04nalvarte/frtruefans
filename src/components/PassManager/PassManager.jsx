@@ -65,7 +65,7 @@ const PassManager = () => {
   };
 
   const handleModifyPass = (passId) => {
-    navigate(`/modify/${passId}?brandId=${brandId}`);
+    navigate(`/create?brandId=${brandId}&editPassId=${passId}`);
   };
 
   const handleBackToDashboard = () => {

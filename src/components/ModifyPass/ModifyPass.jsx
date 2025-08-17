@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { createPassTemplate, getPassTemplate } from '../../services/api';
+import { updatePassTemplate, getPassTemplate } from '../../services/api';
 import { COLOR_PRESETS, VALIDATION_RULES, ERROR_MESSAGES } from '../../utils/constants';
 import AddressAutocomplete from '../PassCreate/AddressAutocomplete';
 import Loading from '../common/Loading';
@@ -207,8 +207,9 @@ const ModifyPass = () => {
         console.log(`${key}:`, value);
       }
 
+      // Use PUT method to update existing pass
       // eslint-disable-next-line no-unused-vars
-      const result = await createPassTemplate(formDataToSend);
+      const result = await updatePassTemplate(passId, formDataToSend);
 
       setSuccess(true);
       

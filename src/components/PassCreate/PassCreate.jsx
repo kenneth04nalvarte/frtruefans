@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { createPassTemplate } from '../../services/api';
+import { createPassTemplate, updatePassTemplate, getPassTemplate } from '../../services/api';
 import { COLOR_PRESETS, VALIDATION_RULES, ERROR_MESSAGES } from '../../utils/constants';
 import AddressAutocomplete from './AddressAutocomplete';
 import Loading from '../common/Loading';
@@ -16,6 +16,8 @@ const PassCreate = () => {
   const [success, setSuccess] = useState(false);
   const [createdTemplate, setCreatedTemplate] = useState(null);
   const [currentBrand, setCurrentBrand] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [existingPassId, setExistingPassId] = useState(null);
   
   const [formData, setFormData] = useState({
     brandName: '',
@@ -45,9 +47,11 @@ const PassCreate = () => {
     strip: null
   });
 
-  // Load brand data if brandId is provided
+  // Load brand data and check for edit mode
   useEffect(() => {
     const brandId = searchParams.get('brandId');
+    const editPassId = searchParams.get('editPassId');
+    
     if (brandId) {
       const savedBrands = localStorage.getItem('brands');
       if (savedBrands) {
@@ -63,7 +67,46 @@ const PassCreate = () => {
         }
       }
     }
+    
+    // Check if we're editing an existing pass
+    if (editPassId) {
+      setIsEditing(true);
+      setExistingPassId(editPassId);
+      loadExistingPassData(editPassId);
+    }
   }, [searchParams]);
+  
+  // Load existing pass data for editing
+  const loadExistingPassData = async (passId) => {
+    try {
+      setLoading(true);
+      const passData = await getPassTemplate(passId);
+      
+      // Pre-fill form with existing data
+      setFormData({
+        brandName: passData.brandName || '',
+        address: passData.address || '',
+        promoText: passData.promoText || '',
+        backgroundColor: passData.backgroundColor || '#ffffff',
+        foregroundColor: passData.foregroundColor || '#000000',
+        brandId: passData.brandId || ''
+      });
+
+      // Set location data if available
+      if (passData.latitude && passData.longitude) {
+        setLocationData({
+          latitude: passData.latitude,
+          longitude: passData.longitude,
+          placeId: passData.placeId || null
+        });
+      }
+    } catch (err) {
+      setError('Failed to load pass data for editing. Please try again.');
+      console.error('Error loading pass for editing:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Image validation function
   const validateImage = (file) => {
@@ -215,7 +258,16 @@ const PassCreate = () => {
         console.log(`${key}:`, value);
       }
 
-      const result = await createPassTemplate(formDataToSend);
+      let result;
+      
+      // Use the correct API call based on create vs update mode
+      if (isEditing && existingPassId) {
+        // UPDATE existing pass
+        result = await updatePassTemplate(existingPassId, formDataToSend);
+      } else {
+        // CREATE new pass
+        result = await createPassTemplate(formDataToSend);
+      }
       
       // Save pass to brand's passes if we have a brandId
       if (currentBrand) {
@@ -245,9 +297,20 @@ const PassCreate = () => {
       setCreatedTemplate(result);
       setSuccess(true);
       
-      // Navigate to QR code display after a short delay
+      // Navigate based on create vs update mode
       setTimeout(() => {
-        navigate(`/qr/${result.passId}`);
+        if (isEditing) {
+          // For updates, go back to pass manager
+          const brandId = searchParams.get('brandId');
+          if (brandId) {
+            navigate(`/brand/${brandId}/passes`);
+          } else {
+            navigate('/dashboard');
+          }
+        } else {
+          // For new passes, go to QR code display
+          navigate(`/qr/${result.passId}`);
+        }
       }, 2000);
       
     } catch (err) {
@@ -287,16 +350,27 @@ const PassCreate = () => {
   };
 
   if (loading) {
-    return <Loading message="Creating your pass template..." size="large" />;
+    return <Loading message={isEditing ? "Loading pass data..." : "Creating your pass template..."} size="large" />;
   }
 
   if (success && createdTemplate) {
     return (
       <div className="pass-create-success">
         <SuccessMessage 
-          message={`Pass template "${createdTemplate.brandName}" created successfully!`}
-          actionText="View QR Code"
-          onAction={() => navigate(`/qr/${createdTemplate.passId}`)}
+          message={`Pass template "${createdTemplate.brandName}" ${isEditing ? 'updated' : 'created'} successfully!`}
+          actionText={isEditing ? "Go to Pass Manager" : "View QR Code"}
+          onAction={() => {
+            if (isEditing) {
+              const brandId = searchParams.get('brandId');
+              if (brandId) {
+                navigate(`/brand/${brandId}/passes`);
+              } else {
+                navigate('/dashboard');
+              }
+            } else {
+              navigate(`/qr/${createdTemplate.passId}`);
+            }
+          }}
         />
         <div className="template-preview">
           <h3>Template Preview</h3>
@@ -323,8 +397,8 @@ const PassCreate = () => {
   return (
     <div className="pass-create">
       <div className="pass-create-header">
-        <h1>Create Apple Pass Template</h1>
-        <p>Design your Apple Wallet pass for customers to download</p>
+        <h1>{isEditing ? 'Edit Apple Pass Template' : 'Create Apple Pass Template'}</h1>
+        <p>{isEditing ? 'Update your Apple Wallet pass template' : 'Design your Apple Wallet pass for customers to download'}</p>
       </div>
 
       <form onSubmit={handleSubmit} className="pass-create-form">
@@ -570,9 +644,9 @@ const PassCreate = () => {
           <button type="button" className="btn btn-secondary" onClick={handleReset}>
             Reset Form
           </button>
-          <button type="submit" className="btn btn-primary">
-            Create Pass Template
-          </button>
+                  <button type="submit" className="btn btn-primary">
+          {isEditing ? 'Update Pass Template' : 'Create Pass Template'}
+        </button>
         </div>
       </form>
     </div>
