@@ -4,7 +4,7 @@ import NavBar from './components/common/NavBar';
 import Dashboard from './components/Dashboard/Dashboard';
 import PassManager from './components/PassManager/PassManager';
 import PassCreate from './components/PassCreate/PassCreate';
-import ModifyPass from './components/ModifyPass/ModifyPass';
+
 import EditPassPage from './components/EditPassPage/EditPassPage';
 import DinerRegistration from './components/DinerRegistration/DinerRegistration';
 import DinerView from './components/DinerView/DinerView';
@@ -24,7 +24,6 @@ function App() {
             <Route path="/brand/:brandId/passes" element={<PassManager />} />
             <Route path="/create" element={<PassCreate />} />
             <Route path="/edit/:passId" element={<EditPassPage />} />
-            <Route path="/modify/:passId" element={<ModifyPass />} />
             <Route path="/register/:passId" element={<DinerRegistration />} />
             <Route path="/diner/:serialNumber" element={<DinerView />} />
             <Route path="/qr/:passId" element={<QRCodeDisplay />} />
