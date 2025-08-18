@@ -39,25 +39,24 @@ const PassManager = () => {
           const apiPasses = await getPassTemplatesByBrand(brandId);
           console.log('API passes:', apiPasses);
           
-          if (apiPasses && Array.isArray(apiPasses)) {
-            setPasses(apiPasses);
-            // Also save to localStorage for offline access
-            localStorage.setItem(`passes_${brandId}`, JSON.stringify(apiPasses));
-          } else {
-            // Fallback to localStorage if API fails
-            const savedPasses = localStorage.getItem(`passes_${brandId}`);
-            if (savedPasses) {
-              setPasses(JSON.parse(savedPasses));
-            }
-          }
-        } catch (apiError) {
-          console.error('API Error loading passes:', apiError);
-          // Fallback to localStorage
-          const savedPasses = localStorage.getItem(`passes_${brandId}`);
-          if (savedPasses) {
-            setPasses(JSON.parse(savedPasses));
-          }
-        }
+                     if (apiPasses && Array.isArray(apiPasses)) {
+             setPasses(apiPasses);
+             // DO NOT save to localStorage to prevent conflicts
+           } else {
+             // Only use localStorage as fallback if API completely fails
+             const savedPasses = localStorage.getItem(`passes_${brandId}`);
+             if (savedPasses) {
+               setPasses(JSON.parse(savedPasses));
+             }
+           }
+                 } catch (apiError) {
+           console.error('API Error loading passes:', apiError);
+           // Only fallback to localStorage if API completely fails
+           const savedPasses = localStorage.getItem(`passes_${brandId}`);
+           if (savedPasses) {
+             setPasses(JSON.parse(savedPasses));
+           }
+         }
       } catch (err) {
         console.error('Error loading data:', err);
         setError('Failed to load data');
@@ -99,11 +98,10 @@ const PassManager = () => {
       const apiPasses = await getPassTemplatesByBrand(brandId);
       console.log('Refreshed passes:', apiPasses);
       
-      if (apiPasses && Array.isArray(apiPasses)) {
-        setPasses(apiPasses);
-        // Update localStorage with latest API data
-        localStorage.setItem(`passes_${brandId}`, JSON.stringify(apiPasses));
-      }
+             if (apiPasses && Array.isArray(apiPasses)) {
+         setPasses(apiPasses);
+         // DO NOT save to localStorage to prevent conflicts
+       }
     } catch (error) {
       console.error('Error refreshing passes:', error);
     }
@@ -113,6 +111,8 @@ const PassManager = () => {
     // Clear localStorage to force fresh API data
     localStorage.removeItem(`passes_${brandId}`);
     console.log('Cleared localStorage for brandId:', brandId);
+    // Force refresh from API
+    refreshPasses();
   };
 
   const handleBackToDashboard = () => {
