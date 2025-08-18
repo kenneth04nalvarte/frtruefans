@@ -135,7 +135,17 @@ export const getPassTemplate = async (passId) => {
 };
 
 export const getPassTemplatesByBrand = async (brandId) => {
-  return apiCall(`/api/passes/templates/brand/${brandId}`);
+  console.log('=== GET PASSES BY BRAND ===');
+  console.log('brandId:', brandId);
+  console.log('URL:', `${API_BASE_URL}/api/passes/templates/brand/${brandId}`);
+  
+  const result = await apiCall(`/api/passes/templates/brand/${brandId}`);
+  
+  console.log('Received passes:', result);
+  console.log('Number of passes:', Array.isArray(result) ? result.length : 'Not an array');
+  console.log('=== END GET PASSES BY BRAND ===');
+  
+  return result;
 };
 
 // Diner Pass API calls

@@ -62,6 +62,10 @@ const EditPassPage = () => {
   const handleBackToPassManager = () => {
     const brandId = searchParams.get('brandId');
     if (brandId) {
+      // Force refresh when returning to pass manager
+      // Clear any cached data and force API refresh
+      localStorage.removeItem(`passes_${brandId}`);
+      console.log('Cleared localStorage before returning to PassManager');
       navigate(`/brand/${brandId}/passes`);
     } else {
       navigate('/dashboard');

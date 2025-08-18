@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { getPassTemplatesByBrand } from '../../services/api';
 import './PassManager.css';
@@ -66,7 +66,34 @@ const PassManager = () => {
     };
 
     loadData();
-  }, [brandId, location.pathname]); // Re-run when location changes (returning from edit)
+    }, [brandId, location.pathname]); // Re-run when location changes (returning from edit)
+
+  // Define refreshPasses with useCallback to prevent infinite re-renders
+  const refreshPasses = useCallback(async () => {
+    try {
+      console.log('=== REFRESHING PASSES ===');
+      console.log('Timestamp:', new Date().toISOString());
+      const apiPasses = await getPassTemplatesByBrand(brandId);
+      console.log('Refreshed passes:', apiPasses);
+      console.log('Pass IDs:', apiPasses?.map(p => p.passId) || 'No passes');
+      
+      if (apiPasses && Array.isArray(apiPasses)) {
+        setPasses(apiPasses);
+        // DO NOT save to localStorage to prevent conflicts
+        console.log('Updated passes state with', apiPasses.length, 'passes');
+      }
+    } catch (error) {
+      console.error('Error refreshing passes:', error);
+    }
+  }, [brandId]);
+
+  // Force refresh when component mounts to ensure fresh data
+  useEffect(() => {
+    if (brandId && !loading) {
+      console.log('=== FORCE REFRESH ON MOUNT ===');
+      refreshPasses();
+    }
+  }, [brandId, loading, refreshPasses]); // Include all dependencies
 
   // Remove automatic localStorage saving to prevent conflicts with API data
 
@@ -90,21 +117,6 @@ const PassManager = () => {
 
   const handleModifyPass = (passId) => {
     navigate(`/edit/${passId}?brandId=${brandId}`);
-  };
-
-  const refreshPasses = async () => {
-    try {
-      console.log('=== REFRESHING PASSES ===');
-      const apiPasses = await getPassTemplatesByBrand(brandId);
-      console.log('Refreshed passes:', apiPasses);
-      
-             if (apiPasses && Array.isArray(apiPasses)) {
-         setPasses(apiPasses);
-         // DO NOT save to localStorage to prevent conflicts
-       }
-    } catch (error) {
-      console.error('Error refreshing passes:', error);
-    }
   };
 
   const clearLocalStorage = () => {
