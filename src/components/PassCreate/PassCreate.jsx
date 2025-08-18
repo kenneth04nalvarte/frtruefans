@@ -9,6 +9,9 @@ import SuccessMessage from '../common/SuccessMessage';
 import './PassCreate.css';
 
 const PassCreate = ({ isEditing = false, existingPassId = null, existingData = null, onSuccess = null }) => {
+  console.log('=== COMPONENT VERSION TEST ===');
+  console.log('This is the UPDATED PassCreate component with edit support');
+  console.log('=== END VERSION TEST ===');
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(false);

@@ -99,6 +99,11 @@ export const createPassTemplateWithImages = async (templateData, imageFiles) => 
 };
 
 export const updatePassTemplateWithImages = async (passId, templateData, imageFiles) => {
+  console.log('=== SUBMITTING UPDATE ===');
+  console.log('Using PUT endpoint for passId:', passId);
+  console.log('Template data:', templateData);
+  console.log('Image files:', imageFiles);
+  
   const formData = new FormData();
   
   // Add template data
@@ -117,7 +122,16 @@ export const updatePassTemplateWithImages = async (passId, templateData, imageFi
 };
 
 export const getPassTemplate = async (passId) => {
-  return apiCall(`/api/passes/templates/${passId}`);
+  console.log('=== GET PASS TEMPLATE ===');
+  console.log('passId:', passId);
+  console.log('URL:', `${API_BASE_URL}/api/passes/templates/${passId}`);
+  
+  const result = await apiCall(`/api/passes/templates/${passId}`);
+  
+  console.log('Received template data:', result);
+  console.log('=== END GET PASS TEMPLATE ===');
+  
+  return result;
 };
 
 export const getPassTemplatesByBrand = async (brandId) => {

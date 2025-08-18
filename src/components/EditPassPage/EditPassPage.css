@@ -1,0 +1,14 @@
+.edit-pass-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.edit-pass-error {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.edit-pass-error .btn {
+  margin-top: 20px;
+}
