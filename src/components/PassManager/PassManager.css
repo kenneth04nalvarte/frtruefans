@@ -51,7 +51,8 @@
   align-items: center;
 }
 
-.refresh-btn {
+.refresh-btn,
+.clear-cache-btn {
   padding: 0.75rem 1rem;
   font-weight: 500;
 }

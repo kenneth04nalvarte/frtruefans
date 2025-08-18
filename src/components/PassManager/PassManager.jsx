@@ -69,12 +69,7 @@ const PassManager = () => {
     loadData();
   }, [brandId, location.pathname]); // Re-run when location changes (returning from edit)
 
-  // Save passes to localStorage whenever passes change
-  useEffect(() => {
-    if (brandId) {
-      localStorage.setItem(`passes_${brandId}`, JSON.stringify(passes));
-    }
-  }, [passes, brandId]);
+  // Remove automatic localStorage saving to prevent conflicts with API data
 
   const handleCreatePass = () => {
     navigate(`/create?brandId=${brandId}`);
@@ -90,9 +85,7 @@ const PassManager = () => {
       setPasses(prev => prev.filter(pass => pass.passId !== passId));
       
       // TODO: Add API call to delete pass from backend
-      // For now, just update localStorage
-      const updatedPasses = passes.filter(pass => pass.passId !== passId);
-      localStorage.setItem(`passes_${brandId}`, JSON.stringify(updatedPasses));
+      // Note: localStorage will be updated when API data is refreshed
     }
   };
 
@@ -108,11 +101,18 @@ const PassManager = () => {
       
       if (apiPasses && Array.isArray(apiPasses)) {
         setPasses(apiPasses);
+        // Update localStorage with latest API data
         localStorage.setItem(`passes_${brandId}`, JSON.stringify(apiPasses));
       }
     } catch (error) {
       console.error('Error refreshing passes:', error);
     }
+  };
+
+  const clearLocalStorage = () => {
+    // Clear localStorage to force fresh API data
+    localStorage.removeItem(`passes_${brandId}`);
+    console.log('Cleared localStorage for brandId:', brandId);
   };
 
   const handleBackToDashboard = () => {
@@ -173,6 +173,9 @@ const PassManager = () => {
                  <div className="header-actions">
            <button className="btn btn-secondary refresh-btn" onClick={refreshPasses} title="Refresh Passes">
              🔄 Refresh
+           </button>
+           <button className="btn btn-secondary clear-cache-btn" onClick={clearLocalStorage} title="Clear Cache">
+             🗑️ Clear Cache
            </button>
            <button className="btn btn-primary create-pass-btn" onClick={handleCreatePass}>
              + Create Pass
