@@ -260,8 +260,12 @@ const PassCreate = ({ isEditing = false, existingPassId = null, existingData = n
       }
 
       // Debug: Log what we're sending
+      console.log('=== SUBMIT DEBUG ===');
+      console.log('internalIsEditing:', internalIsEditing);
+      console.log('internalExistingPassId:', internalExistingPassId);
       console.log('Template data:', templateData);
       console.log('Image files:', imageFiles);
+      console.log('=== END SUBMIT DEBUG ===');
 
       let result;
       
@@ -274,28 +278,43 @@ const PassCreate = ({ isEditing = false, existingPassId = null, existingData = n
         result = await createPassTemplateWithImages(templateData, imageFiles);
       }
       
-      // Save pass to brand's passes if we have a brandId
+      // Handle localStorage based on create vs update mode
       if (currentBrand) {
-        const savedPasses = localStorage.getItem(`passes_${currentBrand.id}`) || '[]';
-        const passes = JSON.parse(savedPasses);
-        const newPass = {
-          ...result,
-          createdAt: new Date().toISOString(),
-          status: 'active'
-        };
-        passes.push(newPass);
-        localStorage.setItem(`passes_${currentBrand.id}`, JSON.stringify(passes));
-        
-        // Update brand's pass count
-        const savedBrands = localStorage.getItem('brands');
-        if (savedBrands) {
-          const brands = JSON.parse(savedBrands);
-          const updatedBrands = brands.map(b => 
-            b.id === currentBrand.id 
-              ? { ...b, passCount: b.passCount + 1 }
-              : b
+        if (internalIsEditing && internalExistingPassId) {
+          // UPDATE: Update existing pass in localStorage
+          const savedPasses = localStorage.getItem(`passes_${currentBrand.id}`) || '[]';
+          const passes = JSON.parse(savedPasses);
+          const updatedPasses = passes.map(pass => 
+            pass.passId === internalExistingPassId 
+              ? { ...pass, ...result, updatedAt: new Date().toISOString() }
+              : pass
           );
-          localStorage.setItem('brands', JSON.stringify(updatedBrands));
+          localStorage.setItem(`passes_${currentBrand.id}`, JSON.stringify(updatedPasses));
+          console.log('Updated existing pass in localStorage:', internalExistingPassId);
+        } else {
+          // CREATE: Add new pass to localStorage
+          const savedPasses = localStorage.getItem(`passes_${currentBrand.id}`) || '[]';
+          const passes = JSON.parse(savedPasses);
+          const newPass = {
+            ...result,
+            createdAt: new Date().toISOString(),
+            status: 'active'
+          };
+          passes.push(newPass);
+          localStorage.setItem(`passes_${currentBrand.id}`, JSON.stringify(passes));
+          
+          // Update brand's pass count only for new passes
+          const savedBrands = localStorage.getItem('brands');
+          if (savedBrands) {
+            const brands = JSON.parse(savedBrands);
+            const updatedBrands = brands.map(b => 
+              b.id === currentBrand.id 
+                ? { ...b, passCount: b.passCount + 1 }
+                : b
+            );
+            localStorage.setItem('brands', JSON.stringify(updatedBrands));
+          }
+          console.log('Added new pass to localStorage:', result.passId);
         }
       }
       
