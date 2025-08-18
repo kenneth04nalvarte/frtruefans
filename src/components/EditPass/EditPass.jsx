@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { updatePassTemplateWithImages, getPassTemplate } from '../../services/api';
+import { API_BASE_URL } from '../../utils/constants';
 import { COLOR_PRESETS, ERROR_MESSAGES } from '../../utils/constants';
 import AddressAutocomplete from '../PassCreate/AddressAutocomplete';
 import Loading from '../common/Loading';
@@ -210,6 +211,10 @@ const EditPass = ({ passId }) => {
       }
 
       // UPDATE existing pass (NOT create)
+      console.log('=== CALLING UPDATE API ===');
+      console.log('passId:', passId);
+      console.log('URL:', `${API_BASE_URL}/api/passes/templates/${passId}`);
+      console.log('Method: PUT');
       const result = await updatePassTemplateWithImages(passId, templateData, imageFiles);
       
       console.log('=== UPDATE SUCCESS ===');

@@ -73,14 +73,25 @@ const PassManager = () => {
     try {
       console.log('=== REFRESHING PASSES ===');
       console.log('Timestamp:', new Date().toISOString());
+      console.log('brandId:', brandId);
       const apiPasses = await getPassTemplatesByBrand(brandId);
       console.log('Refreshed passes:', apiPasses);
       console.log('Pass IDs:', apiPasses?.map(p => p.passId) || 'No passes');
+      console.log('Pass names:', apiPasses?.map(p => p.brandName) || 'No names');
       
       if (apiPasses && Array.isArray(apiPasses)) {
         setPasses(apiPasses);
         // DO NOT save to localStorage to prevent conflicts
         console.log('Updated passes state with', apiPasses.length, 'passes');
+        
+        // Check for duplicates
+        const passIds = apiPasses.map(p => p.passId);
+        const uniqueIds = [...new Set(passIds)];
+        if (passIds.length !== uniqueIds.length) {
+          console.error('DUPLICATE PASS IDs DETECTED!');
+          console.error('Original IDs:', passIds);
+          console.error('Unique IDs:', uniqueIds);
+        }
       }
     } catch (error) {
       console.error('Error refreshing passes:', error);
