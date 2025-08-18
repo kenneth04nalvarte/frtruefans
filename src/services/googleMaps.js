@@ -18,6 +18,11 @@ const loadGoogleMapsAPI = () => {
     return Promise.reject(new Error('Google Maps API key is not configured. Please update the API key in constants.js'));
   }
 
+  // Validate API key format
+  if (!GOOGLE_MAPS_API_KEY.startsWith('AIza')) {
+    return Promise.reject(new Error('Invalid Google Maps API key format. Please check your API key.'));
+  }
+
   loadPromise = new Promise((resolve, reject) => {
     // Check if script is already loaded
     if (window.google && window.google.maps) {
@@ -62,14 +67,10 @@ export const initializeAddressAutocomplete = async (inputElement, onPlaceSelect)
 
     // Enhanced autocomplete options for better results
     const autocomplete = new window.google.maps.places.Autocomplete(inputElement, {
-      types: ['address', 'establishment', 'geocode'], // Allow more types for better results
+      types: ['address'], // Only use 'address' type to avoid mixing errors
       componentRestrictions: { country: 'us' }, // Restrict to US addresses
       fields: ['formatted_address', 'geometry', 'place_id', 'name', 'address_components'],
-      strictBounds: false,
-      bounds: new window.google.maps.LatLngBounds(
-        new window.google.maps.LatLng(24.396308, -125.000000), // Southwest
-        new window.google.maps.LatLng(49.384358, -66.934570)   // Northeast
-      )
+      strictBounds: false
     });
 
     autocomplete.addListener('place_changed', () => {
@@ -95,6 +96,16 @@ export const initializeAddressAutocomplete = async (inputElement, onPlaceSelect)
         onPlaceSelect(placeData);
       } else {
         console.warn('No geometry found for selected place:', place);
+        // Still call onPlaceSelect with available data
+        const placeData = {
+          address: place.formatted_address || place.name || '',
+          latitude: null,
+          longitude: null,
+          placeId: place.place_id,
+          name: place.name,
+          addressComponents: place.address_components
+        };
+        onPlaceSelect(placeData);
       }
     });
 
@@ -173,6 +184,25 @@ export const validateApiKey = async () => {
     return testResult ? true : false;
   } catch (error) {
     console.error('Invalid Google Maps API Key:', error);
+    return false;
+  }
+};
+
+// Test API key permissions
+export const testApiKeyPermissions = async () => {
+  try {
+    await loadGoogleMapsAPI();
+    
+    // Test if Places API is working
+    const testInput = document.createElement('input');
+    new window.google.maps.places.Autocomplete(testInput, {
+      types: ['address']
+    });
+    
+    console.log('API key permissions test passed');
+    return true;
+  } catch (error) {
+    console.error('API key permissions test failed:', error);
     return false;
   }
 };
