@@ -1,3 +1,5 @@
+import { API_BASE_URL } from '../utils/constants';
+
 class PassUpdateService {
   constructor() {
     this.eventSource = null;
@@ -13,7 +15,7 @@ class PassUpdateService {
     this.userId = userId;
     this.onUpdateCallback = onUpdateCallback;
     
-    const url = `https://applepass-originator-ojhsb2liva-uc.a.run.app/api/sse/subscribe/${userId}`;
+    const url = `${API_BASE_URL}/api/sse/subscribe/${userId}`;
     this.eventSource = new EventSource(url);
     
     this.eventSource.onopen = () => {
@@ -48,7 +50,7 @@ class PassUpdateService {
       return;
     }
 
-    fetch(`https://applepass-originator-ojhsb2liva-uc.a.run.app/api/sse/subscribe/${this.userId}/pass/${passId}`, {
+    fetch(`${API_BASE_URL}/api/sse/subscribe/${this.userId}/pass/${passId}`, {
       method: 'POST'
     })
     .then(response => {
@@ -110,7 +112,7 @@ class PassUpdateService {
 
   checkForUpdates() {
     // Implement polling logic here
-    fetch(`https://applepass-originator-ojhsb2liva-uc.a.run.app/api/passes/check-updates/${this.userId}`)
+    fetch(`${API_BASE_URL}/api/passes/check-updates/${this.userId}`)
       .then(response => response.json())
       .then(updates => {
         if (updates.length > 0) {
