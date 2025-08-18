@@ -18,7 +18,6 @@ const PassCreate = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [createdTemplate, setCreatedTemplate] = useState(null);
-  const [currentBrand, setCurrentBrand] = useState(null);
   
   const [formData, setFormData] = useState({
     brandName: '',
@@ -48,7 +47,7 @@ const PassCreate = () => {
     strip: null
   });
 
-  // Load brand data
+  // Load brand data for form pre-filling
   useEffect(() => {
     const brandId = searchParams.get('brandId');
     
@@ -58,7 +57,6 @@ const PassCreate = () => {
         const brands = JSON.parse(savedBrands);
         const brand = brands.find(b => b.id === brandId);
         if (brand) {
-          setCurrentBrand(brand);
           setFormData(prev => ({
             ...prev,
             brandName: brand.name,
@@ -210,31 +208,8 @@ const PassCreate = () => {
       // CREATE new pass (ONLY)
       const result = await createPassTemplateWithImages(templateData, imageFiles);
       
-      // Add new pass to localStorage
-      if (currentBrand) {
-        const savedPasses = localStorage.getItem(`passes_${currentBrand.id}`) || '[]';
-        const passes = JSON.parse(savedPasses);
-        const newPass = {
-          ...result,
-          createdAt: new Date().toISOString(),
-          status: 'active'
-        };
-        passes.push(newPass);
-        localStorage.setItem(`passes_${currentBrand.id}`, JSON.stringify(passes));
-        
-        // Update brand's pass count
-        const savedBrands = localStorage.getItem('brands');
-        if (savedBrands) {
-          const brands = JSON.parse(savedBrands);
-          const updatedBrands = brands.map(b => 
-            b.id === currentBrand.id 
-              ? { ...b, passCount: b.passCount + 1 }
-              : b
-          );
-          localStorage.setItem('brands', JSON.stringify(updatedBrands));
-        }
-        console.log('Added new pass to localStorage:', result.passId);
-      }
+      // DO NOT update localStorage - let API be the source of truth
+      console.log('NOT updating localStorage - API is source of truth');
       
       setCreatedTemplate(result);
       setSuccess(true);

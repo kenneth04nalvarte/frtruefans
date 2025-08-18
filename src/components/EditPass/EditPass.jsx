@@ -22,7 +22,6 @@ const EditPass = ({ passId }) => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [updatedTemplate, setUpdatedTemplate] = useState(null);
-  const [currentBrand, setCurrentBrand] = useState(null);
   
   const [formData, setFormData] = useState({
     brandName: '',
@@ -81,17 +80,7 @@ const EditPass = ({ passId }) => {
           placeId: passData.placeId || null
         });
 
-        // Load brand data
-        if (passData.brandId) {
-          const savedBrands = localStorage.getItem('brands');
-          if (savedBrands) {
-            const brands = JSON.parse(savedBrands);
-            const brand = brands.find(b => b.id === passData.brandId);
-            if (brand) {
-              setCurrentBrand(brand);
-            }
-          }
-        }
+                 // Brand data is not needed since we're not using localStorage
         
         console.log('=== PASS DATA LOADED ===');
         console.log('=== END PASS DATA LOADED ===');
@@ -221,18 +210,8 @@ const EditPass = ({ passId }) => {
       console.log('Updated pass result:', result);
       console.log('=== END UPDATE SUCCESS ===');
 
-      // Update localStorage for the existing pass (NOT add new)
-      if (currentBrand) {
-        const savedPasses = localStorage.getItem(`passes_${currentBrand.id}`) || '[]';
-        const passes = JSON.parse(savedPasses);
-        const updatedPasses = passes.map(pass => 
-          pass.passId === passId 
-            ? { ...pass, ...result, updatedAt: new Date().toISOString() }
-            : pass
-        );
-        localStorage.setItem(`passes_${currentBrand.id}`, JSON.stringify(updatedPasses));
-        console.log('Updated existing pass in localStorage:', passId);
-      }
+      // DO NOT update localStorage - let API be the source of truth
+      console.log('NOT updating localStorage - API is source of truth');
       
       setUpdatedTemplate(result);
       setSuccess(true);
@@ -241,9 +220,7 @@ const EditPass = ({ passId }) => {
       setTimeout(() => {
         const brandId = searchParams.get('brandId');
         if (brandId) {
-          // Clear localStorage to force fresh API data
-          localStorage.removeItem(`passes_${brandId}`);
-          console.log('Cleared localStorage before returning to PassManager');
+          console.log('Navigating back to PassManager');
           navigate(`/brand/${brandId}/passes`);
         } else {
           navigate('/dashboard');
@@ -276,7 +253,6 @@ const EditPass = ({ passId }) => {
           onAction={() => {
             const brandId = searchParams.get('brandId');
             if (brandId) {
-              localStorage.removeItem(`passes_${brandId}`);
               navigate(`/brand/${brandId}/passes`);
             } else {
               navigate('/dashboard');

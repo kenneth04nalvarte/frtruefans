@@ -35,27 +35,19 @@ const PassManager = () => {
         console.log('=== LOADING PASSES FROM API ===');
         console.log('brandId:', brandId);
         
-        try {
-          const apiPasses = await getPassTemplatesByBrand(brandId);
-          console.log('API passes:', apiPasses);
-          
-                     if (apiPasses && Array.isArray(apiPasses)) {
+                 try {
+           const apiPasses = await getPassTemplatesByBrand(brandId);
+           console.log('API passes:', apiPasses);
+           
+           if (apiPasses && Array.isArray(apiPasses)) {
              setPasses(apiPasses);
              // DO NOT save to localStorage to prevent conflicts
            } else {
-             // Only use localStorage as fallback if API completely fails
-             const savedPasses = localStorage.getItem(`passes_${brandId}`);
-             if (savedPasses) {
-               setPasses(JSON.parse(savedPasses));
-             }
+             setPasses([]); // Empty array if no passes
            }
-                 } catch (apiError) {
+         } catch (apiError) {
            console.error('API Error loading passes:', apiError);
-           // Only fallback to localStorage if API completely fails
-           const savedPasses = localStorage.getItem(`passes_${brandId}`);
-           if (savedPasses) {
-             setPasses(JSON.parse(savedPasses));
-           }
+           setPasses([]); // Empty array on error
          }
       } catch (err) {
         console.error('Error loading data:', err);
@@ -131,10 +123,8 @@ const PassManager = () => {
   };
 
   const clearLocalStorage = () => {
-    // Clear localStorage to force fresh API data
-    localStorage.removeItem(`passes_${brandId}`);
-    console.log('Cleared localStorage for brandId:', brandId);
     // Force refresh from API
+    console.log('Forcing refresh from API');
     refreshPasses();
   };
 
