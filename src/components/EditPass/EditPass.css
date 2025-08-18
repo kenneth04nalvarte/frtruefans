@@ -80,6 +80,18 @@
   min-height: 100px;
 }
 
+.form-group small {
+  display: block;
+  margin-top: 0.25rem;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.location-info {
+  color: #059669 !important;
+  font-weight: 500;
+}
+
 .color-section {
   display: grid;
   grid-template-columns: 1fr 1fr;

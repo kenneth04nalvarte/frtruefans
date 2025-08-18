@@ -316,9 +316,15 @@ const EditPass = ({ passId }) => {
             <label htmlFor="address">Address *</label>
             <AddressAutocomplete
               value={formData.address}
+              onChange={(value) => setFormData(prev => ({ ...prev, address: value }))}
               onPlaceSelect={handleLocationSelect}
               placeholder="Enter address"
             />
+            {locationData.latitude && locationData.longitude && (
+              <small className="location-info">
+                ✓ Location verified: {locationData.latitude.toFixed(6)}, {locationData.longitude.toFixed(6)}
+              </small>
+            )}
           </div>
 
           <div className="form-group">
