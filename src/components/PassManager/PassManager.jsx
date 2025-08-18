@@ -11,6 +11,7 @@ const PassManager = () => {
   const [passes, setPasses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [refreshKey, setRefreshKey] = useState(0); // Add refresh key to force re-renders
 
   // Load brand and passes from API and localStorage
   useEffect(() => {
@@ -90,13 +91,30 @@ const PassManager = () => {
     }
   }, [brandId]);
 
-  // Force refresh when component mounts to ensure fresh data
+  // Force refresh when component mounts or when returning from edit page
   useEffect(() => {
     if (brandId && !loading) {
-      console.log('=== FORCE REFRESH ON MOUNT ===');
+      console.log('=== FORCE REFRESH ON MOUNT OR RETURN ===');
+      console.log('Current pathname:', location.pathname);
+      console.log('Refresh key:', refreshKey);
       refreshPasses();
     }
-  }, [brandId, loading, refreshPasses]); // Include all dependencies
+  }, [brandId, loading, refreshPasses, location.pathname, refreshKey]); // Include refreshKey to force updates
+
+  // Detect when returning from edit page and force refresh
+  useEffect(() => {
+    // Check if we're returning from an edit page (URL contains /edit/)
+    const isReturningFromEdit = location.pathname.includes('/brand/') && 
+                               !location.pathname.includes('/edit/') && 
+                               !location.pathname.includes('/create') &&
+                               !location.pathname.includes('/qr/');
+    
+    if (isReturningFromEdit && brandId) {
+      console.log('=== DETECTED RETURN FROM EDIT PAGE ===');
+      console.log('Forcing refresh of pass data');
+      setRefreshKey(prev => prev + 1); // Increment refresh key to force re-render
+    }
+  }, [location.pathname, brandId]);
 
   // Remove automatic localStorage saving to prevent conflicts with API data
 
@@ -125,7 +143,7 @@ const PassManager = () => {
   const clearLocalStorage = () => {
     // Force refresh from API
     console.log('Forcing refresh from API');
-    refreshPasses();
+    setRefreshKey(prev => prev + 1); // Increment refresh key to force re-render
   };
 
   const handleBackToDashboard = () => {
