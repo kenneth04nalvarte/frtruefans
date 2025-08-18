@@ -75,7 +75,7 @@ src/
 
 The frontend integrates with the Apple Pass backend API:
 
-- **Base URL**: `https://applepass-originator-ojhsb2liva-uc.a.run.app`
+- **Base URL**: `https://applepass-originator-7188044708.us-central1.run.app`
 - **Endpoints**:
   - `POST /api/passes/templates/json` - Create pass template
   - `GET /api/passes/templates/:passId` - Get pass template
@@ -122,7 +122,7 @@ The frontend integrates with the Apple Pass backend API:
 Create a `.env` file in the root directory:
 
 ```env
-REACT_APP_API_BASE_URL=https://applepass-originator-ojhsb2liva-uc.a.run.app
+REACT_APP_API_BASE_URL=https://applepass-originator-7188044708.us-central1.run.app
 REACT_APP_GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
 ```
 

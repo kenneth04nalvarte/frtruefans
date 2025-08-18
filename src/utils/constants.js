@@ -1,5 +1,5 @@
 // API Configuration
-export const API_BASE_URL = 'https://applepass-originator-ojhsb2liva-uc.a.run.app';
+export const API_BASE_URL = 'https://applepass-originator-7188044708.us-central1.run.app';
 
 // Google Maps API Key
 export const GOOGLE_MAPS_API_KEY = 'AIzaSyAtiOmzWU8hbyTn-mj0Dcc_c_9qH_I5zIE';
