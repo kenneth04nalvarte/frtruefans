@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { createPassTemplateWithImages, updatePassTemplateWithImages, getPassTemplate } from '../../services/api';
+import { createPassTemplateWithImages } from '../../services/api';
 import { COLOR_PRESETS, VALIDATION_RULES, ERROR_MESSAGES } from '../../utils/constants';
 import AddressAutocomplete from './AddressAutocomplete';
 import Loading from '../common/Loading';
@@ -8,9 +8,9 @@ import ErrorMessage from '../common/ErrorMessage';
 import SuccessMessage from '../common/SuccessMessage';
 import './PassCreate.css';
 
-const PassCreate = ({ isEditing = false, existingPassId = null, existingData = null, onSuccess = null }) => {
+const PassCreate = () => {
   console.log('=== COMPONENT VERSION TEST ===');
-  console.log('This is the UPDATED PassCreate component with edit support');
+  console.log('This is the DEDICATED PassCreate component - ONLY for creation');
   console.log('=== END VERSION TEST ===');
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -19,38 +19,21 @@ const PassCreate = ({ isEditing = false, existingPassId = null, existingData = n
   const [success, setSuccess] = useState(false);
   const [createdTemplate, setCreatedTemplate] = useState(null);
   const [currentBrand, setCurrentBrand] = useState(null);
-  const [internalIsEditing, setInternalIsEditing] = useState(isEditing);
-  const [internalExistingPassId, setInternalExistingPassId] = useState(existingPassId);
   
-  const [formData, setFormData] = useState(
-    existingData ? {
-      brandName: existingData.brandName || '',
-      address: existingData.address || '',
-      promoText: existingData.promoText || '',
-      backgroundColor: existingData.backgroundColor || '#ffffff',
-      foregroundColor: existingData.foregroundColor || '#000000',
-      brandId: existingData.brandId || ''
-    } : {
-      brandName: '',
-      address: '',
-      promoText: '',
-      backgroundColor: '#ffffff',
-      foregroundColor: '#000000',
-      brandId: ''
-    }
-  );
+  const [formData, setFormData] = useState({
+    brandName: '',
+    address: '',
+    promoText: '',
+    backgroundColor: '#ffffff',
+    foregroundColor: '#000000',
+    brandId: ''
+  });
 
-  const [locationData, setLocationData] = useState(
-    existingData ? {
-      latitude: existingData.latitude || null,
-      longitude: existingData.longitude || null,
-      placeId: existingData.placeId || null
-    } : {
-      latitude: null,
-      longitude: null,
-      placeId: null
-    }
-  );
+  const [locationData, setLocationData] = useState({
+    latitude: null,
+    longitude: null,
+    placeId: null
+  });
 
   // Image upload state
   const [imageFiles, setImageFiles] = useState({
@@ -65,14 +48,9 @@ const PassCreate = ({ isEditing = false, existingPassId = null, existingData = n
     strip: null
   });
 
-  // Load brand data and check for edit mode
+  // Load brand data
   useEffect(() => {
     const brandId = searchParams.get('brandId');
-    const editPassId = searchParams.get('editPassId');
-    
-    // Use props if provided, otherwise use URL parameters
-    const finalIsEditing = isEditing || editPassId;
-    const finalExistingPassId = existingPassId || editPassId;
     
     if (brandId) {
       const savedBrands = localStorage.getItem('brands');
@@ -89,46 +67,9 @@ const PassCreate = ({ isEditing = false, existingPassId = null, existingData = n
         }
       }
     }
-    
-    // Check if we're editing an existing pass
-    if (finalIsEditing && finalExistingPassId && !existingData) {
-      setInternalIsEditing(true);
-      setInternalExistingPassId(finalExistingPassId);
-      loadExistingPassData(finalExistingPassId);
-    }
-  }, [searchParams, isEditing, existingPassId, existingData]);
+  }, [searchParams]);
   
-  // Load existing pass data for editing
-  const loadExistingPassData = async (passId) => {
-    try {
-      setLoading(true);
-      const passData = await getPassTemplate(passId);
-      
-      // Pre-fill form with existing data
-      setFormData({
-        brandName: passData.brandName || '',
-        address: passData.address || '',
-        promoText: passData.promoText || '',
-        backgroundColor: passData.backgroundColor || '#ffffff',
-        foregroundColor: passData.foregroundColor || '#000000',
-        brandId: passData.brandId || ''
-      });
 
-      // Set location data if available
-      if (passData.latitude && passData.longitude) {
-        setLocationData({
-          latitude: passData.latitude,
-          longitude: passData.longitude,
-          placeId: passData.placeId || null
-        });
-      }
-    } catch (err) {
-      setError('Failed to load pass data for editing. Please try again.');
-      console.error('Error loading pass for editing:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // Image validation function
   const validateImage = (file) => {
@@ -261,87 +202,50 @@ const PassCreate = ({ isEditing = false, existingPassId = null, existingData = n
 
       // Debug: Log what we're sending
       console.log('=== SUBMIT DEBUG ===');
-      console.log('internalIsEditing:', internalIsEditing);
-      console.log('internalExistingPassId:', internalExistingPassId);
+      console.log('CREATE MODE ONLY - No editing');
       console.log('Template data:', templateData);
       console.log('Image files:', imageFiles);
       console.log('=== END SUBMIT DEBUG ===');
 
-      let result;
+      // CREATE new pass (ONLY)
+      const result = await createPassTemplateWithImages(templateData, imageFiles);
       
-      // Use the correct API call based on create vs update mode
-      if (internalIsEditing && internalExistingPassId) {
-        // UPDATE existing pass
-        result = await updatePassTemplateWithImages(internalExistingPassId, templateData, imageFiles);
-      } else {
-        // CREATE new pass
-        result = await createPassTemplateWithImages(templateData, imageFiles);
-      }
-      
-      // Handle localStorage based on create vs update mode
+      // Add new pass to localStorage
       if (currentBrand) {
-        if (internalIsEditing && internalExistingPassId) {
-          // UPDATE: Update existing pass in localStorage
-          const savedPasses = localStorage.getItem(`passes_${currentBrand.id}`) || '[]';
-          const passes = JSON.parse(savedPasses);
-          const updatedPasses = passes.map(pass => 
-            pass.passId === internalExistingPassId 
-              ? { ...pass, ...result, updatedAt: new Date().toISOString() }
-              : pass
+        const savedPasses = localStorage.getItem(`passes_${currentBrand.id}`) || '[]';
+        const passes = JSON.parse(savedPasses);
+        const newPass = {
+          ...result,
+          createdAt: new Date().toISOString(),
+          status: 'active'
+        };
+        passes.push(newPass);
+        localStorage.setItem(`passes_${currentBrand.id}`, JSON.stringify(passes));
+        
+        // Update brand's pass count
+        const savedBrands = localStorage.getItem('brands');
+        if (savedBrands) {
+          const brands = JSON.parse(savedBrands);
+          const updatedBrands = brands.map(b => 
+            b.id === currentBrand.id 
+              ? { ...b, passCount: b.passCount + 1 }
+              : b
           );
-          localStorage.setItem(`passes_${currentBrand.id}`, JSON.stringify(updatedPasses));
-          console.log('Updated existing pass in localStorage:', internalExistingPassId);
-        } else {
-          // CREATE: Add new pass to localStorage
-          const savedPasses = localStorage.getItem(`passes_${currentBrand.id}`) || '[]';
-          const passes = JSON.parse(savedPasses);
-          const newPass = {
-            ...result,
-            createdAt: new Date().toISOString(),
-            status: 'active'
-          };
-          passes.push(newPass);
-          localStorage.setItem(`passes_${currentBrand.id}`, JSON.stringify(passes));
-          
-          // Update brand's pass count only for new passes
-          const savedBrands = localStorage.getItem('brands');
-          if (savedBrands) {
-            const brands = JSON.parse(savedBrands);
-            const updatedBrands = brands.map(b => 
-              b.id === currentBrand.id 
-                ? { ...b, passCount: b.passCount + 1 }
-                : b
-            );
-            localStorage.setItem('brands', JSON.stringify(updatedBrands));
-          }
-          console.log('Added new pass to localStorage:', result.passId);
+          localStorage.setItem('brands', JSON.stringify(updatedBrands));
         }
+        console.log('Added new pass to localStorage:', result.passId);
       }
       
       setCreatedTemplate(result);
       setSuccess(true);
       
-      // Navigate based on create vs update mode
+      // Navigate to QR code display for new passes
       setTimeout(() => {
-        if (onSuccess) {
-          // Use provided success callback
-          onSuccess();
-        } else if (internalIsEditing) {
-          // For updates, go back to pass manager
-          const brandId = searchParams.get('brandId');
-          if (brandId) {
-            navigate(`/brand/${brandId}/passes`);
-          } else {
-            navigate('/dashboard');
-          }
-        } else {
-          // For new passes, go to QR code display
-          navigate(`/qr/${result.passId}`);
-        }
+        navigate(`/qr/${result.passId}`);
       }, 2000);
       
     } catch (err) {
-      setError(err.message || `Failed to ${internalIsEditing ? 'update' : 'create'} pass template`);
+      setError(err.message || 'Failed to create pass template');
     } finally {
       setLoading(false);
     }
@@ -377,28 +281,17 @@ const PassCreate = ({ isEditing = false, existingPassId = null, existingData = n
   };
 
   if (loading) {
-    return <Loading message={internalIsEditing ? "Loading pass data..." : "Creating your pass template..."} size="large" />;
+    return <Loading message="Creating your pass template..." size="large" />;
   }
 
   if (success && createdTemplate) {
     return (
       <div className="pass-create-success">
         <SuccessMessage 
-          message={`Pass template "${createdTemplate.brandName}" ${internalIsEditing ? 'updated' : 'created'} successfully!`}
-          actionText={internalIsEditing ? "Go to Pass Manager" : "View QR Code"}
+          message={`Pass template "${createdTemplate.brandName}" created successfully!`}
+          actionText="View QR Code"
           onAction={() => {
-            if (onSuccess) {
-              onSuccess();
-            } else if (internalIsEditing) {
-              const brandId = searchParams.get('brandId');
-              if (brandId) {
-                navigate(`/brand/${brandId}/passes`);
-              } else {
-                navigate('/dashboard');
-              }
-            } else {
-              navigate(`/qr/${createdTemplate.passId}`);
-            }
+            navigate(`/qr/${createdTemplate.passId}`);
           }}
         />
         <div className="template-preview">
@@ -426,8 +319,8 @@ const PassCreate = ({ isEditing = false, existingPassId = null, existingData = n
   return (
     <div className="pass-create">
       <div className="pass-create-header">
-        <h1>{internalIsEditing ? 'Edit Apple Pass Template' : 'Create Apple Pass Template'}</h1>
-        <p>{internalIsEditing ? 'Update your Apple Wallet pass template' : 'Design your Apple Wallet pass for customers to download'}</p>
+        <h1>Create Apple Pass Template</h1>
+        <p>Design your Apple Wallet pass for customers to download</p>
       </div>
 
       <form onSubmit={handleSubmit} className="pass-create-form">
@@ -674,7 +567,7 @@ const PassCreate = ({ isEditing = false, existingPassId = null, existingData = n
             Reset Form
           </button>
                   <button type="submit" className="btn btn-primary">
-          {internalIsEditing ? 'Update Pass Template' : 'Create Pass Template'}
+                      Create Pass Template
         </button>
         </div>
       </form>
