@@ -1,9 +1,8 @@
 // API Configuration
 export const API_BASE_URL = 'https://applepass-originator-ojhsb2liva-uc.a.run.app';
 
-// Google Maps API Key - REPLACE WITH YOUR ACTUAL API KEY
-// Get your API key from: https://console.cloud.google.com/apis/credentials
-export const GOOGLE_MAPS_API_KEY = 'YOUR_GOOGLE_MAPS_API_KEY_HERE';
+// Google Maps API Key
+export const GOOGLE_MAPS_API_KEY = 'AIzaSyAtiOmzWU8hbyTn-mj0Dcc_c_9qH_I5zIE';
 
 // Color presets for pass templates
 export const COLOR_PRESETS = [
