@@ -1,20 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { getPassTemplatesByBrand } from '../../services/api';
 import './PassManager.css';
 
 const PassManager = () => {
   const { brandId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [brand, setBrand] = useState(null);
   const [passes, setPasses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Load brand and passes from localStorage
+  // Load brand and passes from API and localStorage
   useEffect(() => {
-    const loadData = () => {
+    const loadData = async () => {
       try {
-        // Load brand data
+        setLoading(true);
+        
+        // Load brand data from localStorage
         const savedBrands = localStorage.getItem('brands');
         if (savedBrands) {
           const brands = JSON.parse(savedBrands);
@@ -27,10 +31,32 @@ const PassManager = () => {
           }
         }
 
-        // Load passes data
-        const savedPasses = localStorage.getItem(`passes_${brandId}`);
-        if (savedPasses) {
-          setPasses(JSON.parse(savedPasses));
+        // Load passes from API
+        console.log('=== LOADING PASSES FROM API ===');
+        console.log('brandId:', brandId);
+        
+        try {
+          const apiPasses = await getPassTemplatesByBrand(brandId);
+          console.log('API passes:', apiPasses);
+          
+          if (apiPasses && Array.isArray(apiPasses)) {
+            setPasses(apiPasses);
+            // Also save to localStorage for offline access
+            localStorage.setItem(`passes_${brandId}`, JSON.stringify(apiPasses));
+          } else {
+            // Fallback to localStorage if API fails
+            const savedPasses = localStorage.getItem(`passes_${brandId}`);
+            if (savedPasses) {
+              setPasses(JSON.parse(savedPasses));
+            }
+          }
+        } catch (apiError) {
+          console.error('API Error loading passes:', apiError);
+          // Fallback to localStorage
+          const savedPasses = localStorage.getItem(`passes_${brandId}`);
+          if (savedPasses) {
+            setPasses(JSON.parse(savedPasses));
+          }
         }
       } catch (err) {
         console.error('Error loading data:', err);
@@ -41,7 +67,7 @@ const PassManager = () => {
     };
 
     loadData();
-  }, [brandId]);
+  }, [brandId, location.pathname]); // Re-run when location changes (returning from edit)
 
   // Save passes to localStorage whenever passes change
   useEffect(() => {
@@ -60,12 +86,33 @@ const PassManager = () => {
 
   const handleDeletePass = (passId) => {
     if (window.confirm('Are you sure you want to delete this pass? This action cannot be undone.')) {
+      // Remove from local state immediately for better UX
       setPasses(prev => prev.filter(pass => pass.passId !== passId));
+      
+      // TODO: Add API call to delete pass from backend
+      // For now, just update localStorage
+      const updatedPasses = passes.filter(pass => pass.passId !== passId);
+      localStorage.setItem(`passes_${brandId}`, JSON.stringify(updatedPasses));
     }
   };
 
   const handleModifyPass = (passId) => {
     navigate(`/edit/${passId}?brandId=${brandId}`);
+  };
+
+  const refreshPasses = async () => {
+    try {
+      console.log('=== REFRESHING PASSES ===');
+      const apiPasses = await getPassTemplatesByBrand(brandId);
+      console.log('Refreshed passes:', apiPasses);
+      
+      if (apiPasses && Array.isArray(apiPasses)) {
+        setPasses(apiPasses);
+        localStorage.setItem(`passes_${brandId}`, JSON.stringify(apiPasses));
+      }
+    } catch (error) {
+      console.error('Error refreshing passes:', error);
+    }
   };
 
   const handleBackToDashboard = () => {
@@ -123,9 +170,14 @@ const PassManager = () => {
             <p>Pass Manager</p>
           </div>
         </div>
-        <button className="btn btn-primary create-pass-btn" onClick={handleCreatePass}>
-          + Create Pass
-        </button>
+                 <div className="header-actions">
+           <button className="btn btn-secondary refresh-btn" onClick={refreshPasses} title="Refresh Passes">
+             🔄 Refresh
+           </button>
+           <button className="btn btn-primary create-pass-btn" onClick={handleCreatePass}>
+             + Create Pass
+           </button>
+         </div>
       </div>
 
       <div className="pass-manager-content">
