@@ -13,6 +13,8 @@ const AddressAutocomplete = ({
   const inputRef = useRef(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [selectedPlace, setSelectedPlace] = useState(null);
+  const [isAddressComplete, setIsAddressComplete] = useState(false);
 
   useEffect(() => {
     if (inputRef.current && !disabled) {
@@ -31,6 +33,16 @@ const AddressAutocomplete = ({
               // Update the input value with the formatted address
               if (placeData && placeData.address) {
                 onChange(placeData.address);
+                setSelectedPlace(placeData);
+                
+                // Check if address is complete (has street number, route, city, state)
+                const isComplete = placeData.parsedAddress && 
+                  placeData.parsedAddress.streetNumber && 
+                  placeData.parsedAddress.route && 
+                  placeData.parsedAddress.locality && 
+                  placeData.parsedAddress.administrativeArea;
+                
+                setIsAddressComplete(isComplete);
                 
                 // Call the onPlaceSelect callback with full place data
                 if (onPlaceSelect) {
@@ -106,9 +118,25 @@ const AddressAutocomplete = ({
         </div>
       )}
       
-      {!disabled && !isLoading && !error && (
+      {!disabled && !isLoading && !error && !selectedPlace && (
         <div className="autocomplete-help">
           <small>Start typing to see address suggestions</small>
+        </div>
+      )}
+      
+      {selectedPlace && (
+        <div className={`address-feedback ${isAddressComplete ? 'complete' : 'incomplete'}`}>
+          <small>
+            {isAddressComplete ? (
+              <span className="address-complete">
+                ✓ Complete address selected: {selectedPlace.address}
+              </span>
+            ) : (
+              <span className="address-incomplete">
+                ⚠ Address may be incomplete. Please verify: {selectedPlace.address}
+              </span>
+            )}
+          </small>
         </div>
       )}
     </div>

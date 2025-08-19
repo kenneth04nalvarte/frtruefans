@@ -60,6 +60,56 @@ const loadGoogleMapsAPI = () => {
   return loadPromise;
 };
 
+// Enhanced address parsing function
+const parseAddressComponents = (addressComponents) => {
+  const address = {
+    streetNumber: '',
+    route: '',
+    locality: '',
+    administrativeArea: '',
+    postalCode: '',
+    country: '',
+    fullAddress: ''
+  };
+
+  if (addressComponents) {
+    addressComponents.forEach(component => {
+      const types = component.types;
+      const value = component.long_name;
+
+      if (types.includes('street_number')) {
+        address.streetNumber = value;
+      } else if (types.includes('route')) {
+        address.route = value;
+      } else if (types.includes('locality')) {
+        address.locality = value;
+      } else if (types.includes('administrative_area_level_1')) {
+        address.administrativeArea = value;
+      } else if (types.includes('postal_code')) {
+        address.postalCode = value;
+      } else if (types.includes('country')) {
+        address.country = value;
+      }
+    });
+
+    // Build full address
+    const parts = [];
+    if (address.streetNumber && address.route) {
+      parts.push(`${address.streetNumber} ${address.route}`);
+    } else if (address.route) {
+      parts.push(address.route);
+    }
+    if (address.locality) parts.push(address.locality);
+    if (address.administrativeArea) parts.push(address.administrativeArea);
+    if (address.postalCode) parts.push(address.postalCode);
+    if (address.country) parts.push(address.country);
+
+    address.fullAddress = parts.join(', ');
+  }
+
+  return address;
+};
+
 // Address autocomplete functionality
 export const initializeAddressAutocomplete = async (inputElement, onPlaceSelect) => {
   try {
@@ -67,44 +117,107 @@ export const initializeAddressAutocomplete = async (inputElement, onPlaceSelect)
 
     // Enhanced autocomplete options for better results
     const autocomplete = new window.google.maps.places.Autocomplete(inputElement, {
-      types: ['address'], // Only use 'address' type to avoid mixing errors
+      types: ['address', 'establishment'], // Allow both addresses and establishments
       componentRestrictions: { country: 'us' }, // Restrict to US addresses
-      fields: ['formatted_address', 'geometry', 'place_id', 'name', 'address_components'],
+      fields: [
+        'formatted_address', 
+        'geometry', 
+        'place_id', 
+        'name', 
+        'address_components',
+        'vicinity',
+        'types'
+      ],
       strictBounds: false
     });
 
     autocomplete.addListener('place_changed', () => {
       const place = autocomplete.getPlace();
       
-      console.log('Place selected:', place); // Debug logging
+      console.log('=== PLACE SELECTED ===');
+      console.log('Full place object:', place);
+      console.log('Formatted address:', place.formatted_address);
+      console.log('Name:', place.name);
+      console.log('Vicinity:', place.vicinity);
+      console.log('Types:', place.types);
+      console.log('Address components:', place.address_components);
+      
+      // Parse address components for better address construction
+      const parsedAddress = parseAddressComponents(place.address_components);
+      console.log('Parsed address:', parsedAddress);
       
       if (place.geometry && place.geometry.location) {
-        const address = place.formatted_address || place.name || '';
         const lat = place.geometry.location.lat();
         const lng = place.geometry.location.lng();
         
+        // Use the most complete address available
+        let bestAddress = '';
+        if (place.formatted_address) {
+          bestAddress = place.formatted_address;
+        } else if (parsedAddress.fullAddress) {
+          bestAddress = parsedAddress.fullAddress;
+        } else if (place.name && place.vicinity) {
+          bestAddress = `${place.name}, ${place.vicinity}`;
+        } else if (place.name) {
+          bestAddress = place.name;
+        } else if (place.vicinity) {
+          bestAddress = place.vicinity;
+        }
+        
         const placeData = {
-          address,
+          address: bestAddress,
           latitude: lat,
           longitude: lng,
           placeId: place.place_id,
           name: place.name,
-          addressComponents: place.address_components
+          vicinity: place.vicinity,
+          types: place.types,
+          addressComponents: place.address_components,
+          parsedAddress: parsedAddress,
+          formattedAddress: place.formatted_address
         };
         
-        console.log('Place data:', placeData); // Debug logging
+        console.log('=== FINAL PLACE DATA ===');
+        console.log('Selected address:', bestAddress);
+        console.log('Latitude:', lat);
+        console.log('Longitude:', lng);
+        console.log('=== END PLACE DATA ===');
+        
         onPlaceSelect(placeData);
       } else {
         console.warn('No geometry found for selected place:', place);
-        // Still call onPlaceSelect with available data
+        
+        // Still try to get the best address possible
+        let bestAddress = '';
+        if (place.formatted_address) {
+          bestAddress = place.formatted_address;
+        } else if (parsedAddress.fullAddress) {
+          bestAddress = parsedAddress.fullAddress;
+        } else if (place.name && place.vicinity) {
+          bestAddress = `${place.name}, ${place.vicinity}`;
+        } else if (place.name) {
+          bestAddress = place.name;
+        } else if (place.vicinity) {
+          bestAddress = place.vicinity;
+        }
+        
         const placeData = {
-          address: place.formatted_address || place.name || '',
+          address: bestAddress,
           latitude: null,
           longitude: null,
           placeId: place.place_id,
           name: place.name,
-          addressComponents: place.address_components
+          vicinity: place.vicinity,
+          types: place.types,
+          addressComponents: place.address_components,
+          parsedAddress: parsedAddress,
+          formattedAddress: place.formatted_address
         };
+        
+        console.log('=== PLACE DATA (NO GEOMETRY) ===');
+        console.log('Selected address:', bestAddress);
+        console.log('=== END PLACE DATA ===');
+        
         onPlaceSelect(placeData);
       }
     });
