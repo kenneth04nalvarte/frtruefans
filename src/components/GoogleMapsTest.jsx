@@ -34,7 +34,7 @@ const GoogleMapsTest = () => {
       document.body.appendChild(testInput);
 
       try {
-        const autocomplete = await initializeAddressAutocomplete(testInput, (placeData) => {
+        await initializeAddressAutocomplete(testInput, (placeData) => {
           console.log('Test autocomplete place selected:', placeData);
           results.autocompleteWorking = true;
           results.lastPlaceData = placeData;
