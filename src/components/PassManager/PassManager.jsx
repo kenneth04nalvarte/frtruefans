@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { getPassTemplatesByBrand } from '../../services/api';
+import LiveUpdate from '../LiveUpdate/LiveUpdate';
 import './PassManager.css';
 
 const PassManager = () => {
@@ -12,6 +13,8 @@ const PassManager = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [refreshKey, setRefreshKey] = useState(0); // Add refresh key to force re-renders
+  const [selectedPassForUpdate, setSelectedPassForUpdate] = useState(null);
+  const [showLiveUpdate, setShowLiveUpdate] = useState(false);
 
   // Load brand and passes from API and localStorage
   useEffect(() => {
@@ -138,6 +141,24 @@ const PassManager = () => {
 
   const handleModifyPass = (passId) => {
     navigate(`/edit/${passId}?brandId=${brandId}`);
+  };
+
+  const handleLiveUpdate = (passId) => {
+    setSelectedPassForUpdate(passId);
+    setShowLiveUpdate(true);
+  };
+
+  const handleUpdateSuccess = (result) => {
+    console.log('Live update successful:', result);
+    setShowLiveUpdate(false);
+    setSelectedPassForUpdate(null);
+    // Optionally refresh the passes list
+    refreshPasses();
+  };
+
+  const handleCloseLiveUpdate = () => {
+    setShowLiveUpdate(false);
+    setSelectedPassForUpdate(null);
   };
 
   const clearLocalStorage = () => {
@@ -333,6 +354,12 @@ const PassManager = () => {
                       Modify Pass
                     </button>
                     <button 
+                      className="btn btn-info"
+                      onClick={() => handleLiveUpdate(pass.passId)}
+                    >
+                      Live Update
+                    </button>
+                    <button 
                       className="btn btn-primary"
                       onClick={() => navigate(`/register/${pass.passId}`)}
                     >
@@ -345,6 +372,29 @@ const PassManager = () => {
           )}
         </div>
       </div>
+
+      {/* Live Update Modal */}
+      {showLiveUpdate && selectedPassForUpdate && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h3>Live Update Pass</h3>
+              <button 
+                className="modal-close"
+                onClick={handleCloseLiveUpdate}
+              >
+                ×
+              </button>
+            </div>
+            <div className="modal-body">
+              <LiveUpdate 
+                passId={selectedPassForUpdate}
+                onUpdateSuccess={handleUpdateSuccess}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
