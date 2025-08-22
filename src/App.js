@@ -9,6 +9,7 @@ import EditPassPage from './components/EditPassPage/EditPassPage';
 import DinerRegistration from './components/DinerRegistration/DinerRegistration';
 import DinerView from './components/DinerView/DinerView';
 import QRCodeDisplay from './components/QRCodeDisplay/QRCodeDisplay';
+import GoogleMapsTest from './components/GoogleMapsTest';
 import './App.css';
 
 function App() {
@@ -27,6 +28,7 @@ function App() {
             <Route path="/register/:passId" element={<DinerRegistration />} />
             <Route path="/diner/:serialNumber" element={<DinerView />} />
             <Route path="/qr/:passId" element={<QRCodeDisplay />} />
+            <Route path="/test-maps" element={<GoogleMapsTest />} />
             
             {/* Catch all route */}
             <Route path="*" element={<Navigate to="/dashboard" replace />} />

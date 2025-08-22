@@ -44,8 +44,9 @@ const loadGoogleMapsAPI = () => {
       resolve();
     };
 
-    script.onerror = () => {
+    script.onerror = (error) => {
       clearTimeout(timeout);
+      console.error('Google Maps API script failed to load:', error);
       reject(new Error('Failed to load Google Maps API. Please check your internet connection and API key.'));
     };
 
@@ -117,8 +118,8 @@ export const initializeAddressAutocomplete = async (inputElement, onPlaceSelect)
 
     // Enhanced autocomplete options for better results
     const autocomplete = new window.google.maps.places.Autocomplete(inputElement, {
-      types: ['address', 'establishment'], // Allow both addresses and establishments
-      componentRestrictions: { country: 'us' }, // Restrict to US addresses
+      types: ['address', 'establishment', 'geocode'], // Allow addresses, establishments, and geocoding
+      // Remove country restriction to allow more flexibility
       fields: [
         'formatted_address', 
         'geometry', 
