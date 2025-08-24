@@ -118,8 +118,7 @@ export const initializeAddressAutocomplete = async (inputElement, onPlaceSelect)
 
     // Enhanced autocomplete options for better results
     const autocomplete = new window.google.maps.places.Autocomplete(inputElement, {
-      types: ['address', 'establishment', 'geocode'], // Allow addresses, establishments, and geocoding
-      // Remove country restriction to allow more flexibility
+      types: ['address'], // Use only 'address' type to avoid mixing errors
       fields: [
         'formatted_address', 
         'geometry', 
