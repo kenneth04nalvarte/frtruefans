@@ -32,8 +32,26 @@ const AddressAutocomplete = ({
               
               // Update the input value with the formatted address
               if (placeData && placeData.address) {
+                console.log('AddressAutocomplete: Setting address to:', placeData.address);
+                
+                // Force update the input field with the full address
                 onChange(placeData.address);
                 setSelectedPlace(placeData);
+                
+                // Also update the input element directly to ensure it shows the full address
+                if (inputRef.current) {
+                  inputRef.current.value = placeData.address;
+                  console.log('AddressAutocomplete: Updated input.value to:', inputRef.current.value);
+                }
+                
+                // Use setTimeout to ensure the input field gets updated after React re-render
+                setTimeout(() => {
+                  if (inputRef.current && inputRef.current.value !== placeData.address) {
+                    console.log('AddressAutocomplete: Forcing input update after delay');
+                    inputRef.current.value = placeData.address;
+                    onChange(placeData.address);
+                  }
+                }, 10);
                 
                 // Check if address is complete (has street number, route, city, state)
                 const isComplete = placeData.parsedAddress && 
@@ -82,7 +100,13 @@ const AddressAutocomplete = ({
   }, [onChange, onPlaceSelect, disabled]);
 
   const handleInputChange = (e) => {
-    onChange(e.target.value);
+    // Only update if this is a manual input change (not from autocomplete selection)
+    if (!selectedPlace || e.target.value !== selectedPlace.address) {
+      onChange(e.target.value);
+      // Clear selected place when user manually types
+      setSelectedPlace(null);
+      setIsAddressComplete(false);
+    }
   };
 
   return (

@@ -150,18 +150,23 @@ export const initializeAddressAutocomplete = async (inputElement, onPlaceSelect)
         const lat = place.geometry.location.lat();
         const lng = place.geometry.location.lng();
         
-        // Use the most complete address available
+        // Use the most complete address available - prioritize formatted_address
         let bestAddress = '';
         if (place.formatted_address) {
           bestAddress = place.formatted_address;
+          console.log('Using formatted_address:', bestAddress);
         } else if (parsedAddress.fullAddress) {
           bestAddress = parsedAddress.fullAddress;
+          console.log('Using parsedAddress.fullAddress:', bestAddress);
         } else if (place.name && place.vicinity) {
           bestAddress = `${place.name}, ${place.vicinity}`;
+          console.log('Using name + vicinity:', bestAddress);
         } else if (place.name) {
           bestAddress = place.name;
+          console.log('Using name only:', bestAddress);
         } else if (place.vicinity) {
           bestAddress = place.vicinity;
+          console.log('Using vicinity only:', bestAddress);
         }
         
         const placeData = {
