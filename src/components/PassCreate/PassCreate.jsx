@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { createPassTemplateWithImages } from '../../services/api';
+import { createPassTemplateWithImages, updatePassTemplateWithImages, updatePassTemplate } from '../../services/api';
 import { COLOR_PRESETS, VALIDATION_RULES, ERROR_MESSAGES } from '../../utils/constants';
 import AddressAutocomplete from './AddressAutocomplete';
 import Loading from '../common/Loading';
@@ -8,7 +8,11 @@ import ErrorMessage from '../common/ErrorMessage';
 import SuccessMessage from '../common/SuccessMessage';
 import './PassCreate.css';
 
-const PassCreate = () => {
+const PassCreate = ({ 
+  isEditing = false, 
+  existingPassId = null, 
+  existingData = null 
+}) => {
   console.log('=== COMPONENT VERSION TEST ===');
   console.log('This is the DEDICATED PassCreate component - ONLY for creation');
   console.log('=== END VERSION TEST ===');
@@ -19,14 +23,16 @@ const PassCreate = () => {
   const [success, setSuccess] = useState(false);
   const [createdTemplate, setCreatedTemplate] = useState(null);
   
-  const [formData, setFormData] = useState({
-    brandName: '',
-    address: '',
-    promoText: '',
-    backgroundColor: '#ffffff',
-    foregroundColor: '#000000',
-    brandId: ''
-  });
+  const [formData, setFormData] = useState(
+    isEditing && existingData ? existingData : {
+      brandName: '',
+      address: '',
+      promoText: '',
+      backgroundColor: '#ffffff',
+      foregroundColor: '#000000',
+      brandId: ''
+    }
+  );
 
   const [locationData, setLocationData] = useState({
     latitude: null,
@@ -36,15 +42,15 @@ const PassCreate = () => {
 
   // Image upload state
   const [imageFiles, setImageFiles] = useState({
-    icon: null,
-    logo: null,
-    strip: null
+    iconImage: null,
+    logoImage: null,
+    stripImage: null
   });
 
   const [imagePreviews, setImagePreviews] = useState({
-    icon: null,
-    logo: null,
-    strip: null
+    iconImage: null,
+    logoImage: null,
+    stripImage: null
   });
 
   // Load brand data for form pre-filling
@@ -105,10 +111,14 @@ const PassCreate = () => {
       };
       reader.readAsDataURL(file);
       
-      // Store file for form submission
+      // Store file for form submission - convert type to correct property name
+      const propertyName = type === 'icon' ? 'iconImage' : 
+                          type === 'logo' ? 'logoImage' : 
+                          type === 'strip' ? 'stripImage' : type;
+      
       setImageFiles(prev => ({
         ...prev,
-        [type]: file
+        [propertyName]: file
       }));
       
       setError(''); // Clear any previous errors
@@ -117,13 +127,18 @@ const PassCreate = () => {
 
   // Remove image
   const handleRemoveImage = (type) => {
+    // Convert type to the correct property name
+    const propertyName = type === 'icon' ? 'iconImage' : 
+                        type === 'logo' ? 'logoImage' : 
+                        type === 'strip' ? 'stripImage' : type;
+    
     setImageFiles(prev => ({
       ...prev,
-      [type]: null
+      [propertyName]: null
     }));
     setImagePreviews(prev => ({
       ...prev,
-      [type]: null
+      [propertyName]: null
     }));
   };
 
@@ -182,45 +197,60 @@ const PassCreate = () => {
     setError('');
 
     try {
-      // Prepare template data object
       const templateData = {
-        brandName: formData.brandName,
-        address: formData.address,
-        promoText: formData.promoText,
-        backgroundColor: formData.backgroundColor,
-        foregroundColor: formData.foregroundColor,
-        brandId: formData.brandId || `brand-${Date.now()}`
+        ...formData,
+        // Auto-generate brandId if not provided
+        brandId: formData.brandId || `brand-${Date.now()}`,
+        // Include location data if available
+        ...(locationData.latitude && locationData.longitude && {
+          latitude: locationData.latitude,
+          longitude: locationData.longitude
+        })
       };
-      
-      // Add location data if available
-      if (locationData.latitude && locationData.longitude) {
-        templateData.latitude = locationData.latitude;
-        templateData.longitude = locationData.longitude;
+
+      let result;
+      if (isEditing && existingPassId) {
+        // UPDATE existing pass
+        console.log('=== SUBMITTING UPDATE ===');
+        console.log('Using PUT endpoint for passId:', existingPassId);
+        console.log('Template data:', templateData);
+        console.log('Image files:', imageFiles);
+        
+        // Check if we actually have images to update
+        const hasImages = imageFiles.iconImage || imageFiles.logoImage || imageFiles.stripImage;
+        
+        if (hasImages) {
+          console.log('Images detected, using form endpoint');
+          result = await updatePassTemplateWithImages(existingPassId, templateData, imageFiles);
+        } else {
+          console.log('No images, using JSON endpoint');
+          result = await updatePassTemplate(existingPassId, templateData);
+        }
+        
+        setSuccess(true);
+        setCreatedTemplate(result);
+        
+        // Navigate to QR code display after a short delay
+        setTimeout(() => {
+          navigate(`/qr/${result.passId}`);
+        }, 2000);
+      } else {
+        // CREATE new pass (unchanged)
+        console.log('=== SUBMITTING CREATE ===');
+        console.log('Using POST endpoint for new pass');
+        console.log('Template data:', templateData);
+        result = await createPassTemplateWithImages(templateData, imageFiles);
+        setCreatedTemplate(result);
+        setSuccess(true);
+        
+        // Navigate to QR code display after a short delay
+        setTimeout(() => {
+          navigate(`/qr/${result.passId}`);
+        }, 2000);
       }
-
-      // Debug: Log what we're sending
-      console.log('=== SUBMIT DEBUG ===');
-      console.log('CREATE MODE ONLY - No editing');
-      console.log('Template data:', templateData);
-      console.log('Image files:', imageFiles);
-      console.log('=== END SUBMIT DEBUG ===');
-
-      // CREATE new pass (ONLY)
-      const result = await createPassTemplateWithImages(templateData, imageFiles);
-      
-      // DO NOT update localStorage - let API be the source of truth
-      console.log('NOT updating localStorage - API is source of truth');
-      
-      setCreatedTemplate(result);
-      setSuccess(true);
-      
-      // Navigate to QR code display for new passes
-      setTimeout(() => {
-        navigate(`/qr/${result.passId}`);
-      }, 2000);
       
     } catch (err) {
-      setError(err.message || 'Failed to create pass template');
+      setError(err.message || `Failed to ${isEditing ? 'update' : 'create'} pass template`);
     } finally {
       setLoading(false);
     }
@@ -241,14 +271,14 @@ const PassCreate = () => {
       placeId: null
     });
     setImageFiles({
-      icon: null,
-      logo: null,
-      strip: null
+      iconImage: null,
+      logoImage: null,
+      stripImage: null
     });
     setImagePreviews({
-      icon: null,
-      logo: null,
-      strip: null
+      iconImage: null,
+      logoImage: null,
+      stripImage: null
     });
     setError('');
     setSuccess(false);
@@ -375,8 +405,8 @@ const PassCreate = () => {
             <div className="image-preview">
               <label htmlFor="iconImage" className="image-upload-label">
                 <div className="upload-area">
-                  {imagePreviews.icon ? (
-                    <img src={imagePreviews.icon} alt="Icon preview" />
+                  {imagePreviews.iconImage ? (
+                    <img src={imagePreviews.iconImage} alt="Icon preview" />
                   ) : (
                     <div className="upload-placeholder">
                       <span className="upload-icon">📱</span>
@@ -393,7 +423,7 @@ const PassCreate = () => {
                   style={{ display: 'none' }}
                 />
               </label>
-              {imagePreviews.icon && (
+              {imagePreviews.iconImage && (
                 <button
                   type="button"
                   className="remove-image-btn"
@@ -408,8 +438,8 @@ const PassCreate = () => {
             <div className="image-preview">
               <label htmlFor="logoImage" className="image-upload-label">
                 <div className="upload-area">
-                  {imagePreviews.logo ? (
-                    <img src={imagePreviews.logo} alt="Logo preview" />
+                  {imagePreviews.logoImage ? (
+                    <img src={imagePreviews.logoImage} alt="Logo preview" />
                   ) : (
                     <div className="upload-placeholder">
                       <span className="upload-icon">🏢</span>
@@ -426,7 +456,7 @@ const PassCreate = () => {
                   style={{ display: 'none' }}
                 />
               </label>
-              {imagePreviews.logo && (
+              {imagePreviews.logoImage && (
                 <button
                   type="button"
                   className="remove-image-btn"
@@ -441,8 +471,8 @@ const PassCreate = () => {
             <div className="image-preview">
               <label htmlFor="stripImage" className="image-upload-label">
                 <div className="upload-area">
-                  {imagePreviews.strip ? (
-                    <img src={imagePreviews.strip} alt="Strip preview" />
+                  {imagePreviews.stripImage ? (
+                    <img src={imagePreviews.stripImage} alt="Strip preview" />
                   ) : (
                     <div className="upload-placeholder">
                       <span className="upload-icon">🎨</span>
@@ -459,7 +489,7 @@ const PassCreate = () => {
                   style={{ display: 'none' }}
                 />
               </label>
-              {imagePreviews.strip && (
+              {imagePreviews.stripImage && (
                 <button
                   type="button"
                   className="remove-image-btn"

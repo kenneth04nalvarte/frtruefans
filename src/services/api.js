@@ -98,27 +98,56 @@ export const createPassTemplateWithImages = async (templateData, imageFiles) => 
   return createPassTemplate(formData);
 };
 
-export const updatePassTemplateWithImages = async (passId, templateData, imageFiles) => {
-  console.log('=== SUBMITTING UPDATE ===');
-  console.log('Using PUT endpoint for passId:', passId);
-  console.log('Template data:', templateData);
-  console.log('Image files:', imageFiles);
+export const updatePassTemplateWithImages = async (passId, templateData, imageFiles = {}) => {
+  // Check if we actually have images to update
+  const hasImages = imageFiles.iconImage || imageFiles.logoImage || imageFiles.stripImage;
   
+  if (!hasImages) {
+    // No images - use JSON endpoint for better performance
+    console.log('No images to update, using JSON endpoint');
+    return updatePassTemplate(passId, templateData);
+  }
+  
+  // Has images - use form endpoint
+  console.log('Images detected, using form endpoint');
   const formData = new FormData();
   
-  // Add template data
+  // Add all template data as form fields
   Object.keys(templateData).forEach(key => {
     if (templateData[key] !== null && templateData[key] !== undefined) {
       formData.append(key, templateData[key]);
     }
   });
   
-  // Add image files if provided
-  if (imageFiles.icon) formData.append('iconImage', imageFiles.icon);
-  if (imageFiles.logo) formData.append('logoImage', imageFiles.logo);
-  if (imageFiles.strip) formData.append('stripImage', imageFiles.strip);
+  // Add image files
+  if (imageFiles.iconImage) {
+    formData.append('iconImage', imageFiles.iconImage);
+  }
+  if (imageFiles.logoImage) {
+    formData.append('logoImage', imageFiles.logoImage);
+  }
+  if (imageFiles.stripImage) {
+    formData.append('stripImage', imageFiles.stripImage);
+  }
   
-  return updatePassTemplate(passId, formData);
+  const url = `${API_BASE_URL}/api/passes/templates/${passId}`;
+  
+  try {
+    const response = await fetch(url, {
+      method: 'PUT',
+      body: formData,
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('API Error:', error);
+    throw error;
+  }
 };
 
 export const getPassTemplate = async (passId) => {
