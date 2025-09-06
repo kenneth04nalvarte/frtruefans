@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { createPassTemplateWithImages, updatePassTemplateWithImages, updatePassTemplate } from '../../services/api';
+import { createPassTemplateWithImages, updatePassTemplate } from '../../services/api';
 import { COLOR_PRESETS, VALIDATION_RULES, ERROR_MESSAGES } from '../../utils/constants';
 import AddressAutocomplete from './AddressAutocomplete';
 import Loading from '../common/Loading';
@@ -210,22 +210,12 @@ const PassCreate = ({
 
       let result;
       if (isEditing && existingPassId) {
-        // UPDATE existing pass
+        // UPDATE existing pass using JSON endpoint
         console.log('=== SUBMITTING UPDATE ===');
-        console.log('Using PUT endpoint for passId:', existingPassId);
+        console.log('Using PUT JSON endpoint for passId:', existingPassId);
         console.log('Template data:', templateData);
-        console.log('Image files:', imageFiles);
         
-        // Check if we actually have images to update
-        const hasImages = imageFiles.iconImage || imageFiles.logoImage || imageFiles.stripImage;
-        
-        if (hasImages) {
-          console.log('Images detected, using form endpoint');
-          result = await updatePassTemplateWithImages(existingPassId, templateData, imageFiles);
-        } else {
-          console.log('No images, using JSON endpoint');
-          result = await updatePassTemplate(existingPassId, templateData);
-        }
+        result = await updatePassTemplate(existingPassId, templateData);
         
         setSuccess(true);
         setCreatedTemplate(result);
@@ -293,7 +283,9 @@ const PassCreate = ({
     return (
       <div className="pass-create-success">
         <SuccessMessage 
-          message={`Pass template "${createdTemplate.brandName}" created successfully!`}
+          message={isEditing ? 
+            `Pass template "${createdTemplate.brandName}" updated successfully! All existing passes will update automatically on phones!` :
+            `Pass template "${createdTemplate.brandName}" created successfully!`}
           actionText="View QR Code"
           onAction={() => {
             navigate(`/qr/${createdTemplate.passId}`);
@@ -324,8 +316,8 @@ const PassCreate = ({
   return (
     <div className="pass-create">
       <div className="pass-create-header">
-        <h1>Create Apple Pass Template</h1>
-        <p>Design your Apple Wallet pass for customers to download</p>
+        <h1>{isEditing ? 'Edit Apple Pass Template' : 'Create Apple Pass Template'}</h1>
+        <p>{isEditing ? 'Modify your existing Apple Wallet pass template' : 'Design your Apple Wallet pass for customers to download'}</p>
       </div>
 
       <form onSubmit={handleSubmit} className="pass-create-form">
@@ -572,7 +564,7 @@ const PassCreate = ({
             Reset Form
           </button>
                   <button type="submit" className="btn btn-primary">
-                      Create Pass Template
+                      {isEditing ? 'Update Pass Template' : 'Create Pass Template'}
         </button>
         </div>
       </form>

@@ -57,28 +57,6 @@ export const createPassTemplate = async (templateData) => {
   }
 };
 
-export const updatePassTemplate = async (passId, templateData) => {
-  // Always use FormData for the backend
-  const url = `${API_BASE_URL}/api/passes/templates/${passId}`;
-  
-  try {
-    const response = await fetch(url, {
-      method: 'PUT',
-      body: templateData,
-      // Don't set Content-Type header - browser will set it with boundary for FormData
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('API Error:', error);
-    throw error;
-  }
-};
 
 export const createPassTemplateWithImages = async (templateData, imageFiles) => {
   const formData = new FormData();
@@ -98,55 +76,28 @@ export const createPassTemplateWithImages = async (templateData, imageFiles) => 
   return createPassTemplate(formData);
 };
 
-export const updatePassTemplateWithImages = async (passId, templateData, imageFiles = {}) => {
-  // Check if we actually have images to update
-  const hasImages = imageFiles.iconImage || imageFiles.logoImage || imageFiles.stripImage;
+// UPDATE existing pass template (not create new one)
+export const updatePassTemplate = async (passId, updatedData) => {
+  console.log('=== UPDATING PASS TEMPLATE ===');
+  console.log('passId:', passId);
+  console.log('updatedData:', updatedData);
   
-  if (!hasImages) {
-    // No images - use JSON endpoint for better performance
-    console.log('No images to update, using JSON endpoint');
-    return updatePassTemplate(passId, templateData);
-  }
-  
-  // Has images - use form endpoint
-  console.log('Images detected, using form endpoint');
-  const formData = new FormData();
-  
-  // Add all template data as form fields
-  Object.keys(templateData).forEach(key => {
-    if (templateData[key] !== null && templateData[key] !== undefined) {
-      formData.append(key, templateData[key]);
-    }
+  const response = await fetch(`${API_BASE_URL}/api/passes/templates/${passId}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(updatedData)
   });
   
-  // Add image files
-  if (imageFiles.iconImage) {
-    formData.append('iconImage', imageFiles.iconImage);
-  }
-  if (imageFiles.logoImage) {
-    formData.append('logoImage', imageFiles.logoImage);
-  }
-  if (imageFiles.stripImage) {
-    formData.append('stripImage', imageFiles.stripImage);
-  }
-  
-  const url = `${API_BASE_URL}/api/passes/templates/${passId}`;
-  
-  try {
-    const response = await fetch(url, {
-      method: 'PUT',
-      body: formData,
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
-    }
-    
+  if (response.ok) {
+    // Success! All existing passes will now update automatically
+    console.log('Pass template updated successfully!');
+    console.log('All existing passes will update automatically on phones!');
     return await response.json();
-  } catch (error) {
-    console.error('API Error:', error);
-    throw error;
+  } else {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
   }
 };
 
