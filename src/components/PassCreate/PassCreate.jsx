@@ -220,9 +220,15 @@ const PassCreate = ({
         setSuccess(true);
         setCreatedTemplate(result);
         
-        // Navigate to QR code display after a short delay
+        // Navigate back to PassManager after a short delay to show updated data
         setTimeout(() => {
-          navigate(`/qr/${result.passId}`);
+          const urlParams = new URLSearchParams(window.location.search);
+          const brandId = urlParams.get('brandId');
+          if (brandId) {
+            navigate(`/brand/${brandId}`);
+          } else {
+            navigate('/dashboard');
+          }
         }, 2000);
       } else {
         // CREATE new pass (unchanged)

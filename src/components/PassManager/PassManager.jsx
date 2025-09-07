@@ -112,9 +112,14 @@ const PassManager = () => {
     if (isReturningFromEdit && brandId) {
       console.log('=== DETECTED RETURN FROM EDIT PAGE ===');
       console.log('Forcing refresh of pass data');
+      console.log('Current pathname:', location.pathname);
+      console.log('Brand ID:', brandId);
+      
+      // Force immediate refresh
+      refreshPasses();
       setRefreshKey(prev => prev + 1); // Increment refresh key to force re-render
     }
-  }, [location.pathname, brandId]);
+  }, [location.pathname, brandId, refreshPasses]);
 
   // Remove automatic localStorage saving to prevent conflicts with API data
 
