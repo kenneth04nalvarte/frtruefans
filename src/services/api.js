@@ -81,8 +81,9 @@ export const updatePassTemplate = async (passId, updatedData) => {
   console.log('=== UPDATING PASS TEMPLATE ===');
   console.log('passId:', passId);
   console.log('updatedData:', updatedData);
+  console.log('Using JSON endpoint: /api/passes/templates/{passId}/json');
   
-  const response = await fetch(`${API_BASE_URL}/api/passes/templates/${passId}`, {
+  const response = await fetch(`${API_BASE_URL}/api/passes/templates/${passId}/json`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
