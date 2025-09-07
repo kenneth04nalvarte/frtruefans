@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { createPassTemplateWithImages, updatePassTemplate } from '../../services/api';
+import { createPassTemplateWithImages, updatePassTemplate, triggerPassUpdates } from '../../services/api';
 import { COLOR_PRESETS, VALIDATION_RULES, ERROR_MESSAGES } from '../../utils/constants';
 import AddressAutocomplete from './AddressAutocomplete';
 import Loading from '../common/Loading';
@@ -216,6 +216,16 @@ const PassCreate = ({
         console.log('Template data:', templateData);
         
         result = await updatePassTemplate(existingPassId, templateData);
+        
+        // Trigger updates for all users after successful template update
+        try {
+          console.log('=== TRIGGERING USER UPDATES ===');
+          await triggerPassUpdates(existingPassId);
+          console.log('User updates triggered successfully!');
+        } catch (triggerError) {
+          console.error('Failed to trigger user updates:', triggerError);
+          // Don't fail the entire operation if trigger fails
+        }
         
         setSuccess(true);
         setCreatedTemplate(result);

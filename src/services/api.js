@@ -102,6 +102,34 @@ export const updatePassTemplate = async (passId, updatedData) => {
   }
 };
 
+// Trigger updates for all users after pass template update
+export const triggerPassUpdates = async (passId) => {
+  console.log('=== TRIGGERING PASS UPDATES ===');
+  console.log('passId:', passId);
+  console.log('URL:', `${API_BASE_URL}/v1/trigger-updates/${passId}`);
+  
+  try {
+    const response = await fetch(`${API_BASE_URL}/v1/trigger-updates/${passId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
+    
+    if (response.ok) {
+      console.log('Pass updates triggered successfully!');
+      console.log('All users will receive updated passes automatically!');
+      return await response.json();
+    } else {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+    }
+  } catch (error) {
+    console.error('Error triggering pass updates:', error);
+    throw error;
+  }
+};
+
 export const getPassTemplate = async (passId) => {
   console.log('=== GET PASS TEMPLATE ===');
   console.log('passId:', passId);
