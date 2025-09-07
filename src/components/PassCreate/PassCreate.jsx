@@ -13,9 +13,11 @@ const PassCreate = ({
   existingPassId = null, 
   existingData = null 
 }) => {
-  console.log('=== COMPONENT VERSION TEST ===');
-  console.log('This is the DEDICATED PassCreate component - ONLY for creation');
-  console.log('=== END VERSION TEST ===');
+  console.log('=== COMPONENT INITIALIZATION DEBUG ===');
+  console.log('isEditing prop:', isEditing);
+  console.log('existingPassId prop:', existingPassId);
+  console.log('existingData prop:', existingData);
+  console.log('=== END COMPONENT INITIALIZATION DEBUG ===');
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(false);
@@ -209,6 +211,13 @@ const PassCreate = ({
       };
 
       let result;
+      console.log('=== FORM SUBMISSION DEBUG ===');
+      console.log('isEditing:', isEditing);
+      console.log('existingPassId:', existingPassId);
+      console.log('formData:', formData);
+      console.log('templateData:', templateData);
+      console.log('=== END FORM SUBMISSION DEBUG ===');
+      
       if (isEditing && existingPassId) {
         // UPDATE existing pass using JSON endpoint
         console.log('=== SUBMITTING UPDATE ===');
