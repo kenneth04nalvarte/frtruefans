@@ -68,10 +68,11 @@ export const createPassTemplateWithImages = async (templateData, imageFiles) => 
     console.log('No images provided, using JSON endpoint');
     console.log('Template data:', templateData);
     
-    const response = await fetch(`${API_BASE_URL}/v1/create-test-pass`, {
+    const response = await fetch(`${API_BASE_URL}/api/passes/templates/json`, {
       method: 'POST',
+      body: JSON.stringify(templateData),
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json'
       }
     });
     
