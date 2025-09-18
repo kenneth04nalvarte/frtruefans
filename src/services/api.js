@@ -59,6 +59,36 @@ export const createPassTemplate = async (templateData) => {
 
 
 export const createPassTemplateWithImages = async (templateData, imageFiles) => {
+  // If no images are being uploaded, use JSON endpoint
+  const hasImages = imageFiles.icon || imageFiles.logo || imageFiles.strip;
+  
+  if (!hasImages) {
+    // Use JSON endpoint for creation without images
+    console.log('=== CREATING PASS TEMPLATE (JSON) ===');
+    console.log('No images provided, using JSON endpoint');
+    console.log('Template data:', templateData);
+    
+    const response = await fetch(`${API_BASE_URL}/api/passes/templates/json`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(templateData)
+    });
+    
+    if (response.ok) {
+      console.log('Pass template created successfully via JSON endpoint!');
+      return await response.json();
+    } else {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+    }
+  }
+  
+  // Keep existing form-data logic for creation with images
+  console.log('=== CREATING PASS TEMPLATE (FORM DATA) ===');
+  console.log('Images provided, using form-data endpoint');
+  
   const formData = new FormData();
   
   // Add template data
